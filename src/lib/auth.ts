@@ -7,6 +7,7 @@ import { authConfig } from "@/lib/auth.config";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   session: { strategy: "jwt" },
+  trustHost: true, // Required for Railway/Render/Vercel deployments
   providers: [
     CredentialsProvider({
       name: "Credentials",
