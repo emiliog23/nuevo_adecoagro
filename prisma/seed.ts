@@ -6,199 +6,134 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL as str
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("🌱 Seeding producción...");
 
-  const adminPwd = await bcrypt.hash("admin123", 10);
-  const userPwd = await bcrypt.hash("tecnico123", 10);
+  // ── USUARIOS ──────────────────────────────────────────────────────────────
+  const pwd = await bcrypt.hash("Mantenimiento", 10);
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin" },
-    update: {},
-    create: { name: "Administrador", email: "admin", password: adminPwd, role: "ADMIN" },
-  });
+  const usuarios = [
+    { email: "nlasala",     name: "Nicolas Lasala",     role: "SUPERVISOR", color: "BLANCO"   },
+    { email: "edelvilano",  name: "Emilio Delvilano",   role: "SUPERVISOR", color: "AZUL"     },
+    { email: "jburgueno",   name: "Juan Burgueño",      role: "SUPERVISOR", color: "BLANCO"   },
+    { email: "adominguez",  name: "Alcides Dominguez",  role: "TECNICO",    color: "AMARILLO" },
+    { email: "genecoiz",    name: "Gustavo Enecoiz",    role: "TECNICO",    color: "VERDE"    },
+    { email: "sdabi",       name: "Sergio Dabi",        role: "TECNICO",    color: "ROJO"     },
+    { email: "abustamante", name: "Agustin Bustamante", role: "TECNICO",    color: "AMARILLO" },
+    { email: "jnavas",      name: "Jorge Navas",        role: "TECNICO",    color: "VERDE"    },
+    { email: "fortellado",  name: "Franco Ortellado",   role: "TECNICO",    color: "ROJO"     },
+    { email: "agrios",      name: "Adrian Rios",        role: "TECNICO",    color: "AZUL"     },
+  ];
 
-  const supervisor = await prisma.user.upsert({
-    where: { email: "supervisor" },
-    update: {},
-    create: { name: "Juan Pérez", email: "supervisor", password: userPwd, role: "SUPERVISOR" },
-  });
+  for (const u of usuarios) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: { name: u.name, role: u.role, color: u.color },
+      create: { ...u, password: pwd, activo: true },
+    });
+  }
+  console.log(`✓ ${usuarios.length} usuarios`);
 
-  const tecnico1 = await prisma.user.upsert({
-    where: { email: "tecnico1" },
-    update: {},
-    create: { name: "Carlos García", email: "tecnico1", password: userPwd, role: "TECNICO" },
-  });
+  // ── FÁBRICAS ──────────────────────────────────────────────────────────────
+  const FAB_ESTERIL2 = "cmqr6sb960000g8ysxqdlz21m";
+  const FAB_CENTRAL  = "cmqr7d9cs0000ubys9e44g2wg";
+  const FAB_ESTERIL1 = "cmqr7delv0001ubysz7406obh";
 
-  const tecnico2 = await prisma.user.upsert({
-    where: { email: "tecnico2" },
-    update: {},
-    create: { name: "Miguel Rodríguez", email: "tecnico2", password: userPwd, role: "TECNICO" },
-  });
+  await prisma.fabrica.upsert({ where: { id: FAB_ESTERIL2 }, update: {}, create: { id: FAB_ESTERIL2, nombre: "Esteril II" } });
+  await prisma.fabrica.upsert({ where: { id: FAB_CENTRAL  }, update: {}, create: { id: FAB_CENTRAL,  nombre: "Central"   } });
+  await prisma.fabrica.upsert({ where: { id: FAB_ESTERIL1 }, update: {}, create: { id: FAB_ESTERIL1, nombre: "Esteril I" } });
+  console.log("✓ 3 fábricas");
 
-  const sectorMolienda = await prisma.sector.upsert({
-    where: { id: "sector-molienda" },
-    update: {},
-    create: { id: "sector-molienda", nombre: "Molienda", descripcion: "Área de procesamiento primario" },
-  });
+  // ── SECTORES ──────────────────────────────────────────────────────────────
+  const SEC_ENVASADO   = "cmqr6sggn0001g8ysp45k8yrs";
+  const SEC_PALETIZADO = "cmqr6sjtt0002g8yslpdrq9rz";
 
-  const sectorFermentacion = await prisma.sector.upsert({
-    where: { id: "sector-fermentacion" },
-    update: {},
-    create: { id: "sector-fermentacion", nombre: "Fermentación", descripcion: "Área de fermentación y destilación" },
-  });
+  await prisma.sector.upsert({ where: { id: SEC_ENVASADO   }, update: {}, create: { id: SEC_ENVASADO,   nombre: "Envasado",   fabricaId: FAB_ESTERIL2 } });
+  await prisma.sector.upsert({ where: { id: SEC_PALETIZADO }, update: {}, create: { id: SEC_PALETIZADO, nombre: "Paletizado", fabricaId: FAB_ESTERIL2 } });
+  console.log("✓ 2 sectores");
 
-  const sectorUtilidades = await prisma.sector.upsert({
-    where: { id: "sector-utilidades" },
-    update: {},
-    create: { id: "sector-utilidades", nombre: "Utilidades", descripcion: "Calderas, compresores y servicios generales" },
-  });
+  // ── SUBSECTORES ───────────────────────────────────────────────────────────
+  const subsectores = [
+    { id: "cmqr6t4ao0003g8ysjm1iynhi", nombre: "Envasado",                sectorId: SEC_ENVASADO   },
+    { id: "cmqr6tais0004g8ysahel7ig5", nombre: "Esterilizado",            sectorId: SEC_ENVASADO   },
+    { id: "cmqr73kyd000jnqys62a3us5d", nombre: "PALETIZADORES",           sectorId: SEC_PALETIZADO },
+    { id: "cmqr749ju000onqys5v7usbtb", nombre: "TRANSPORTE PALLET LLENO", sectorId: SEC_PALETIZADO },
+    { id: "cmqr76kyl0010nqysc91au38x", nombre: "ENVOLVEDOR",              sectorId: SEC_PALETIZADO },
+    { id: "cmqr77ie80014nqysa6wvp8f9", nombre: "ROBOT DE PALLET VACIOS",  sectorId: SEC_PALETIZADO },
+  ];
+  for (const s of subsectores) {
+    await prisma.subsector.upsert({ where: { id: s.id }, update: {}, create: s });
+  }
+  console.log(`✓ ${subsectores.length} subsectores`);
 
-  // Subsectores (one per sector for seed)
-  const subMolienda = await prisma.subsector.upsert({
-    where: { id: "sub-sector-molienda" },
-    update: {},
-    create: { id: "sub-sector-molienda", nombre: "General", sectorId: sectorMolienda.id },
-  });
-  const subFermentacion = await prisma.subsector.upsert({
-    where: { id: "sub-sector-fermentacion" },
-    update: {},
-    create: { id: "sub-sector-fermentacion", nombre: "General", sectorId: sectorFermentacion.id },
-  });
-  const subUtilidades = await prisma.subsector.upsert({
-    where: { id: "sub-sector-utilidades" },
-    update: {},
-    create: { id: "sub-sector-utilidades", nombre: "General", sectorId: sectorUtilidades.id },
-  });
+  // ── LÍNEAS ────────────────────────────────────────────────────────────────
+  const lineas = [
+    { id: "cmqr6tr0f0005g8ysxrkm3iim", nombre: "Linea A",                descripcion: "Stelo", subsectorId: "cmqr6t4ao0003g8ysjm1iynhi" },
+    { id: "cmqr6wrol0002l7ysy0rh1x04", nombre: "Linea C",                descripcion: "Speed", subsectorId: "cmqr6t4ao0003g8ysjm1iynhi" },
+    { id: "cmqr6yoqk0000nqysqw1jxby1", nombre: "FLEX 13",               descripcion: null,    subsectorId: "cmqr6tais0004g8ysahel7ig5" },
+    { id: "cmqr6za790003nqysqc0wm09d", nombre: "FLEX 16",               descripcion: null,    subsectorId: "cmqr6tais0004g8ysahel7ig5" },
+    { id: "cmqr7036t0006nqys8begkhty", nombre: "TANQUES ASEPTICOS",     descripcion: null,    subsectorId: "cmqr6tais0004g8ysahel7ig5" },
+    { id: "cmqr70rvy0009nqysrowc3zh0", nombre: "PREPARADO",             descripcion: null,    subsectorId: "cmqr6tais0004g8ysahel7ig5" },
+    { id: "cmqr73nzy000knqysyl2pe4kp", nombre: "A",                     descripcion: null,    subsectorId: "cmqr73kyd000jnqys62a3us5d" },
+    { id: "cmqr73qjp000lnqys22mv8yec", nombre: "C",                     descripcion: null,    subsectorId: "cmqr73kyd000jnqys62a3us5d" },
+    { id: "cmqr74fap000pnqysayflw1nz", nombre: "MESAS DE RODILLOS",     descripcion: null,    subsectorId: "cmqr749ju000onqys5v7usbtb" },
+    { id: "cmqr76s9p0011nqyshgbmd0kp", nombre: "ENVOLVEDOR SAN MARTIN", descripcion: null,    subsectorId: "cmqr76kyl0010nqysc91au38x" },
+    { id: "cmqr77vcx0015nqyse8imxt43", nombre: "ROBOT",                 descripcion: null,    subsectorId: "cmqr77ie80014nqysa6wvp8f9" },
+  ];
+  for (const l of lineas) {
+    await prisma.linea.upsert({ where: { id: l.id }, update: {}, create: l });
+  }
+  console.log(`✓ ${lineas.length} líneas`);
 
-  const lineaMolinos = await prisma.linea.upsert({
-    where: { id: "linea-molinos" },
-    update: {},
-    create: { id: "linea-molinos", nombre: "Línea de Molinos", subsectorId: subMolienda.id },
-  });
+  // ── MÁQUINAS ──────────────────────────────────────────────────────────────
+  const maquinas = [
+    { id: "cmqr6tz400006g8ysd24k3izh", nombre: "A3 FLEX",               lineaId: "cmqr6tr0f0005g8ysxrkm3iim" },
+    { id: "cmqr6u5150007g8ystfz4i7ad", nombre: "HELIX",                  lineaId: "cmqr6tr0f0005g8ysxrkm3iim" },
+    { id: "cmqr6w3350000l7ysedwp5hyf", nombre: "CAPPER 40",              lineaId: "cmqr6tr0f0005g8ysxrkm3iim" },
+    { id: "cmqr6w8xj0001l7yst6pz7huv", nombre: "CARDBOARD PACKER 34",   lineaId: "cmqr6tr0f0005g8ysxrkm3iim" },
+    { id: "cmqr6xb1b0003l7ysct9080gc", nombre: "A3 SPEED",              lineaId: "cmqr6wrol0002l7ysy0rh1x04" },
+    { id: "cmqr6xf3e0004l7ysg06txo6u", nombre: "HELIX",                  lineaId: "cmqr6wrol0002l7ysy0rh1x04" },
+    { id: "cmqr6xjes0005l7ysvmyvjvx0", nombre: "STRAW APPLICATOR",      lineaId: "cmqr6wrol0002l7ysy0rh1x04" },
+    { id: "cmqr6xnmp0006l7yshlsyzyoc", nombre: "MEURER",                 lineaId: "cmqr6wrol0002l7ysy0rh1x04" },
+    { id: "cmqr6xubx0007l7ysrzbxlivv", nombre: "CARDBOARD 30 SPEED",    lineaId: "cmqr6wrol0002l7ysy0rh1x04" },
+    { id: "cmqr6ytjx0001nqysth8r3v1c", nombre: "HOMOGENEIZADOR",        lineaId: "cmqr6yoqk0000nqysqw1jxby1" },
+    { id: "cmqr6z1d70002nqysfzayxp9s", nombre: "TUBO RETENCION",        lineaId: "cmqr6yoqk0000nqysqw1jxby1" },
+    { id: "cmqr6zfnh0004nqysb69qtm7h", nombre: "HOMOGENEIZADOR",        lineaId: "cmqr6za790003nqysqc0wm09d" },
+    { id: "cmqr6zjit0005nqys4qxhkvif", nombre: "TUBO RETENCION",        lineaId: "cmqr6za790003nqysqc0wm09d" },
+    { id: "cmqr70gbm0007nqysgyqevxdx", nombre: "20 M3",                 lineaId: "cmqr7036t0006nqys8begkhty" },
+    { id: "cmqr70llf0008nqys4vcnbyjv", nombre: "30 M3",                 lineaId: "cmqr7036t0006nqys8begkhty" },
+    { id: "cmqr70vfe000anqys7lr1vzgk", nombre: "ALMIX 1",               lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr713x3000bnqysf3t7jon5", nombre: "ALMIX 2",               lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr72083000cnqysccibz4zx", nombre: "TANQUE DE PREPARADO 1", lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr72ae4000dnqys3b7f7sfq", nombre: "TANQUE DE PREPARADO 2", lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr72k4b000enqysrrlp6jbv", nombre: "TANQUE DE FERMENTO 1",  lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr72ofp000fnqys4208voh0", nombre: "TANQUE DE FERMENTO 2",  lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr72vjb000gnqys594wxrqt", nombre: "TANQUE PECTINA",        lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr731dt000hnqyse6cflnpl", nombre: "TANQUE BASE BLANCA",    lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr738ja000inqys7fcivqq5", nombre: "ALDOSE",                lineaId: "cmqr70rvy0009nqysrowc3zh0" },
+    { id: "cmqr73ymy000mnqyse517px3e", nombre: "ROBOT",                 lineaId: "cmqr73nzy000knqysyl2pe4kp" },
+    { id: "cmqr741w3000nnqys2t2b54y6", nombre: "ROBOT",                 lineaId: "cmqr73qjp000lnqys22mv8yec" },
+    { id: "cmqr756na000qnqyszsduc8fz", nombre: "MESA 01",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr759xp000rnqysvh3x8vw7", nombre: "MESA 02",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75dgn000snqysnde7343x", nombre: "MESA 03",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75gu7000tnqys1fmsbb5j", nombre: "MESA 04",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75ju8000unqysfsg7ule8", nombre: "MESA 05",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75o4t000vnqys8y1byqv1", nombre: "MESA 06",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75r3n000wnqyspokifveq", nombre: "MESA 07",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75u3z000xnqys3h60u86s", nombre: "MESA 08",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75ws9000ynqyszuukdfeu", nombre: "MESA 09",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr75zye000znqysze1pcmnc", nombre: "MESA 10",               lineaId: "cmqr74fap000pnqysayflw1nz" },
+    { id: "cmqr76xzo0012nqys1taxtjye", nombre: "ENVOLVEDOR",            lineaId: "cmqr76s9p0011nqyshgbmd0kp" },
+    { id: "cmqr772to0013nqyshxmuec5y", nombre: "IMPRESORA DE ETIQUETA", lineaId: "cmqr76s9p0011nqyshgbmd0kp" },
+    { id: "cmqr77yve0016nqyszrprcuih", nombre: "ROBOT",                 lineaId: "cmqr77vcx0015nqyse8imxt43" },
+  ];
+  for (const m of maquinas) {
+    await prisma.maquina.upsert({ where: { id: m.id }, update: {}, create: m });
+  }
+  console.log(`✓ ${maquinas.length} máquinas`);
 
-  const lineaPreparacion = await prisma.linea.upsert({
-    where: { id: "linea-preparacion" },
-    update: {},
-    create: { id: "linea-preparacion", nombre: "Preparación de Caña", subsectorId: subMolienda.id },
-  });
-
-  const lineaDornas = await prisma.linea.upsert({
-    where: { id: "linea-dornas" },
-    update: {},
-    create: { id: "linea-dornas", nombre: "Dornas de Fermentación", subsectorId: subFermentacion.id },
-  });
-
-  const lineaDestilacion = await prisma.linea.upsert({
-    where: { id: "linea-destilacion" },
-    update: {},
-    create: { id: "linea-destilacion", nombre: "Destilación", subsectorId: subFermentacion.id },
-  });
-
-  const lineaCalderas = await prisma.linea.upsert({
-    where: { id: "linea-calderas" },
-    update: {},
-    create: { id: "linea-calderas", nombre: "Calderas", subsectorId: subUtilidades.id },
-  });
-
-  await Promise.all([
-    prisma.maquina.upsert({ where: { id: "maq-molino1" }, update: {}, create: { id: "maq-molino1", nombre: "Molino #1", codigo: "MOL-001", lineaId: lineaMolinos.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-molino2" }, update: {}, create: { id: "maq-molino2", nombre: "Molino #2", codigo: "MOL-002", lineaId: lineaMolinos.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-molino3" }, update: {}, create: { id: "maq-molino3", nombre: "Molino #3", codigo: "MOL-003", lineaId: lineaMolinos.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-conductor" }, update: {}, create: { id: "maq-conductor", nombre: "Conductor de Caña", codigo: "COND-001", lineaId: lineaPreparacion.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-desfibrador" }, update: {}, create: { id: "maq-desfibrador", nombre: "Desfibrador", codigo: "DESF-001", lineaId: lineaPreparacion.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-dorna1" }, update: {}, create: { id: "maq-dorna1", nombre: "Dorna D-01", codigo: "DORN-001", lineaId: lineaDornas.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-dorna2" }, update: {}, create: { id: "maq-dorna2", nombre: "Dorna D-02", codigo: "DORN-002", lineaId: lineaDornas.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-columna" }, update: {}, create: { id: "maq-columna", nombre: "Columna de Destilación A", codigo: "COL-001", lineaId: lineaDestilacion.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-caldera1" }, update: {}, create: { id: "maq-caldera1", nombre: "Caldera #1", codigo: "CAL-001", lineaId: lineaCalderas.id, } }),
-    prisma.maquina.upsert({ where: { id: "maq-caldera2" }, update: {}, create: { id: "maq-caldera2", nombre: "Caldera #2", codigo: "CAL-002", lineaId: lineaCalderas.id, } }),
-  ]);
-
-  // Descarga de repuestos de ejemplo
-  await prisma.documento.upsert({
-    where: { id: "doc-004" },
-    update: {},
-    create: { id: "doc-004", titulo: "Descarga repuestos - Reparación Molino #2", tipo: "DESCARGA_REPUESTOS", maquinaId: "maq-molino2", creadoPorId: tecnico1.id },
-  });
-  await prisma.descargaRepuestos.upsert({
-    where: { documentoId: "doc-004" },
-    update: {},
-    create: {
-      documentoId: "doc-004",
-      fecha: new Date("2026-06-20T09:00:00"),
-      items: JSON.stringify([
-        { descripcion: "Rodamiento SKF 6306", cantidad: 1, unidad: "unid", ubicacion: "A / 1 / A2" },
-        { descripcion: "Grasa Shell Alvania EP2", cantidad: 0.5, unidad: "kg", ubicacion: "C / 1 / A2" },
-      ]),
-      observaciones: "Utilizado en reparación de cojinete lado libre del Molino #2.",
-    },
-  });
-
-  await prisma.documento.upsert({
-    where: { id: "doc-001" },
-    update: {},
-    create: { id: "doc-001", titulo: "Falla en cojinete del Molino #2", tipo: "REPORTE_INTERVENCION", maquinaId: "maq-molino2", creadoPorId: tecnico1.id },
-  });
-  await prisma.reporteIntervencion.upsert({
-    where: { documentoId: "doc-001" },
-    update: {},
-    create: {
-      documentoId: "doc-001",
-      fechaInicio: new Date("2026-06-20T08:30:00"),
-      fechaFin: new Date("2026-06-20T12:00:00"),
-      tipoFalla: "Mecánica",
-      descripcionFalla: "Vibración excesiva en el cojinete lado libre del molino #2. Temperatura elevada detectada por sensor.",
-      trabajoRealizado: "Se reemplazó el rodamiento SKF 6306. Se lubricó correctamente y se verificó alineación.",
-      observaciones: "Se recomienda programar revisión preventiva mensual del sistema de lubricación.",
-      tecnicoId: tecnico1.id,
-    },
-  });
-
-  await prisma.documento.upsert({
-    where: { id: "doc-002" },
-    update: {},
-    create: { id: "doc-002", titulo: "OT - Mantenimiento preventivo Caldera #1", tipo: "ORDEN_TRABAJO", maquinaId: "maq-caldera1", creadoPorId: supervisor.id },
-  });
-  await prisma.ordenTrabajo.upsert({
-    where: { documentoId: "doc-002" },
-    update: {},
-    create: {
-      documentoId: "doc-002",
-      descripcion: "Mantenimiento preventivo trimestral: limpieza de hogar, revisión de válvulas de seguridad, análisis de agua y ajuste de quemadores.",
-      prioridad: "ALTA",
-      estado: "PENDIENTE",
-      fechaVencimiento: new Date("2026-07-01"),
-      tecnicoId: tecnico2.id,
-      observaciones: "Coordinar con producción para parada programada.",
-    },
-  });
-
-  await prisma.documento.upsert({
-    where: { id: "doc-003" },
-    update: {},
-    create: { id: "doc-003", titulo: "Cierre de Turno Tarde 22/06", tipo: "CIERRE_TURNO", creadoPorId: tecnico2.id },
-  });
-  await prisma.cierreTurno.upsert({
-    where: { documentoId: "doc-003" },
-    update: {},
-    create: {
-      documentoId: "doc-003",
-      fecha: new Date("2026-06-22T22:00:00"),
-      turno: "TARDE",
-      novedades: "Turno sin novedades mayores. Molino #2 continúa fuera de servicio. Producción al 75%.",
-      trabajosRealizados: "- Lubricación semanal de conductores\n- Ajuste de tensión en correas del desfibrador",
-      pendientes: "Completar reparación del Molino #2 en turno noche.",
-      operadorId: tecnico2.id,
-    },
-  });
-
-  console.log("✅ Seed completado!");
-  console.log("\n📋 Credenciales:");
-  console.log("  admin     / admin123   (ADMIN)");
-  console.log("  supervisor / tecnico123 (SUPERVISOR)");
-  console.log("  tecnico1  / tecnico123 (TECNICO)");
-  console.log("  tecnico2  / tecnico123 (TECNICO)");
+  console.log("\n✅ Seed completado.");
+  console.log("   Usuarios: contraseña 'Mantenimiento'");
+  console.log("   Estructura: Esteril II, Central, Esteril I");
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+main().catch(console.error).finally(() => prisma.$disconnect());
