@@ -53,4 +53,3 @@ next-env.d.ts
 
 # Prisma seed scripts (dev only)
 prisma/seed_docs.ts
-prisma.config.ts

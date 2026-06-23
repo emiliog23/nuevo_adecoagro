@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: adecoagro
+    env: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: adecoagro-db
+          property: connectionString
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false
+
+databases:
+  - name: adecoagro-db
+    plan: free
