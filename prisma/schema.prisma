@@ -1,0 +1,268 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("TECNICO")
+  color     String   @default("AZUL")
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documentosCreados    Documento[]           @relation("CreadoPor")
+  reportesIntervencion ReporteIntervencion[] @relation("TecnicoReporte")
+  ordenesAsignadas     OrdenTrabajo[]        @relation("TecnicoAsignado")
+  cierresTurno         CierreTurno[]         @relation("OperadorTurno")
+  lecturas             LecturaDocumento[]
+  notificaciones       Notificacion[]
+  comentarios          Comentario[]
+
+  @@map("users")
+}
+
+model Fabrica {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sectores Sector[]
+
+  @@map("fabricas")
+}
+
+model Sector {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  fabricaId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fabrica     Fabrica   @relation(fields: [fabricaId], references: [id], onDelete: Cascade)
+  subsectores Subsector[]
+
+  @@map("sectores")
+}
+
+model Subsector {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  sectorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sector Sector  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  lineas Linea[]
+
+  @@map("subsectores")
+}
+
+model Linea {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  subsectorId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subsector Subsector @relation(fields: [subsectorId], references: [id], onDelete: Cascade)
+  maquinas  Maquina[]
+
+  @@map("lineas")
+}
+
+model Maquina {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  codigo      String?
+  lineaId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  linea      Linea       @relation(fields: [lineaId], references: [id], onDelete: Cascade)
+  documentos Documento[]
+
+  @@map("maquinas")
+}
+
+model Documento {
+  id          String   @id @default(cuid())
+  titulo      String
+  tipo        String
+  maquinaId   String?
+  creadoPorId String
+  importante  Boolean  @default(false)
+  archivado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  carpetaId           String?
+  maquina             Maquina?             @relation(fields: [maquinaId], references: [id])
+  carpeta             Carpeta?             @relation(fields: [carpetaId], references: [id])
+  creadoPor           User                 @relation("CreadoPor", fields: [creadoPorId], references: [id])
+  reporteIntervencion ReporteIntervencion?
+  ordenTrabajo        OrdenTrabajo?
+  cierreTurno         CierreTurno?
+  descargaRepuestos    DescargaRepuestos?
+  descargasOriginadas  DescargaRepuestos[]  @relation("DescargaOrigen")
+  lecturas             LecturaDocumento[]
+  comentarios          Comentario[]
+  imagenes             ImagenDocumento[]
+  notificaciones       Notificacion[]
+
+  @@map("documentos")
+}
+
+model ReporteIntervencion {
+  id               String    @id @default(cuid())
+  documentoId      String    @unique
+  fechaInicio      DateTime
+  fechaFin         DateTime?
+  tipoFalla        String
+  descripcionFalla String
+  trabajoRealizado String
+  observaciones    String?
+  tecnicoId        String
+  createdAt        DateTime  @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  tecnico   User      @relation("TecnicoReporte", fields: [tecnicoId], references: [id])
+
+  @@map("reportes_intervencion")
+}
+
+model OrdenTrabajo {
+  id               String    @id @default(cuid())
+  documentoId      String    @unique
+  descripcion      String
+  prioridad        String    @default("MEDIA")
+  estado           String    @default("PENDIENTE")
+  fechaVencimiento DateTime?
+  tecnicoId        String?
+  observaciones    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  tecnico   User?     @relation("TecnicoAsignado", fields: [tecnicoId], references: [id])
+
+  @@map("ordenes_trabajo")
+}
+
+model CierreTurno {
+  id                 String   @id @default(cuid())
+  documentoId        String   @unique
+  fecha              DateTime
+  turno              String
+  novedades          String
+  trabajosRealizados String?
+  pendientes         String?
+  operadorId         String
+  createdAt          DateTime @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  operador  User      @relation("OperadorTurno", fields: [operadorId], references: [id])
+
+  @@map("cierres_turno")
+}
+
+model DescargaRepuestos {
+  id                String   @id @default(cuid())
+  documentoId       String   @unique
+  documentoOrigenId String?  // reporte/cierre que generó esta descarga
+  fecha             DateTime
+  items             String
+  observaciones     String?
+  createdAt         DateTime @default(now())
+
+  documento       Documento  @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  documentoOrigen Documento? @relation("DescargaOrigen", fields: [documentoOrigenId], references: [id], onDelete: SetNull)
+
+  @@map("descargas_repuestos")
+}
+
+model Carpeta {
+  id        String   @id @default(cuid())
+  nombre    String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent     Carpeta?   @relation("CarpetaChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Carpeta[]  @relation("CarpetaChildren")
+  documentos Documento[]
+
+  @@map("carpetas")
+}
+
+model LecturaDocumento {
+  id          String   @id @default(cuid())
+  documentoId String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([documentoId, userId])
+  @@map("lecturas_documentos")
+}
+
+model Notificacion {
+  id          String   @id @default(cuid())
+  userId      String
+  tipo        String
+  mensaje     String
+  documentoId String?
+  leida       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documento Documento? @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+}
+
+model Comentario {
+  id          String   @id @default(cuid())
+  documentoId String
+  userId      String
+  contenido   String
+  createdAt   DateTime @default(now())
+
+  documento Documento        @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id])
+  imagenes  ImagenDocumento[]
+
+  @@map("comentarios")
+}
+
+model ImagenDocumento {
+  id           String   @id @default(cuid())
+  documentoId  String
+  comentarioId String?
+  nombre       String
+  url          String
+  size         Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  documento  Documento  @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  comentario Comentario? @relation(fields: [comentarioId], references: [id], onDelete: Cascade)
+
+  @@map("imagenes_documentos")
+}
+
+

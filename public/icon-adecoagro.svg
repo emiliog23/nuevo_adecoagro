@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 104 104" fill="none">
+  <!-- Arc set 1 (outermost) - black -->
+  <path d="M52,6 A46,46 0 0,1 98,52" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Arc set 2 - green -->
+  <path d="M52,13 A39,39 0 0,1 91,52" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Arc set 3 - black -->
+  <path d="M52,20 A32,32 0 0,1 84,52" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Arc set 4 - green -->
+  <path d="M52,27 A25,25 0 0,1 77,52" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Arc set 5 - black -->
+  <path d="M52,34 A18,18 0 0,1 70,52" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Arc set 6 - green -->
+  <path d="M52,41 A11,11 0 0,1 63,52" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Bottom arcs -->
+  <path d="M6,52 A46,46 0 0,0 52,98" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M13,52 A39,39 0 0,0 52,91" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M20,52 A32,32 0 0,0 52,84" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M27,52 A25,25 0 0,0 52,77" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M34,52 A18,18 0 0,0 52,70" stroke="#2B2B2B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M41,52 A11,11 0 0,0 52,63" stroke="#1C6B30" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <line x1="52" y1="4" x2="52" y2="100" stroke="#2B2B2B" stroke-width="2.5"/>
+  <line x1="4" y1="52" x2="100" y2="52" stroke="#2B2B2B" stroke-width="2.5"/>
+  <circle cx="52" cy="52" r="48" stroke="#2B2B2B" stroke-width="3" fill="none"/>
+</svg>
