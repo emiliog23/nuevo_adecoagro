@@ -62,19 +62,34 @@ export default function AnalisisPage() {
   const desde = useCustom && customDesde ? customDesde : format(subDays(new Date(), dias), "yyyy-MM-dd");
   const hasta = useCustom && customHasta ? customHasta : format(new Date(), "yyyy-MM-dd");
 
-  const { data, isLoading } = useSWR(
+  const { data, isLoading, error: swrError } = useSWR(
     `/api/analytics?desde=${desde}&hasta=${hasta}`,
-    fetcher,
+    (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
     { revalidateOnFocus: false }
   );
 
-  if (isLoading || !data) {
+  if (isLoading || (!data && !swrError)) {
     return (
       <div className="h-full flex flex-col">
         <div className="bg-white border-b border-[#d4d6d8] px-6 py-3">
           <h1 className="text-sm font-semibold text-[#1d2023]">Análisis de Datos</h1>
         </div>
         <div className="flex-1 flex items-center justify-center text-sm text-[#5a5f67]">Cargando análisis...</div>
+      </div>
+    );
+  }
+
+  if (swrError || data?.error) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="bg-white border-b border-[#d4d6d8] px-6 py-3">
+          <h1 className="text-sm font-semibold text-[#1d2023]">Análisis de Datos</h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center flex-col gap-2">
+          <p className="text-sm text-red-500 font-medium">Error al cargar el análisis</p>
+          <p className="text-xs text-[#9ea3aa]">{data?.detail ?? swrError?.message ?? "Error desconocido"}</p>
+          <p className="text-xs text-[#9ea3aa]">Revisá los logs del servidor para más detalles.</p>
+        </div>
       </div>
     );
   }

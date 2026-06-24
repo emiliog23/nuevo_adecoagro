@@ -9,6 +9,7 @@ const TIPO_LABELS: Record<string, string> = {
   CIERRE_TURNO: "cierre de turno",
   DESCARGA_REPUESTOS: "descarga de repuestos",
   MEJORA_MODIFICACION: "mejora/modificación",
+  GENERICO: "documento",
 };
 
 export async function GET(req: NextRequest) {
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
         lecturas: { select: { userId: true, user: { select: { name: true } } } },
         carpeta: { select: { id: true, nombre: true } },
         mejoraModificacion: { select: { fechaInicio: true } },
+        documentoGenerico: { select: { contenido: true } },
       },
     }),
     prisma.user.count({ where: { activo: true } }),
@@ -127,6 +129,14 @@ export async function POST(req: NextRequest) {
     if (datos.repuestos?.length) {
       await crearDescargaLinkada(datos, documento.id, maquinaId, session.user.id as string, titulo, "cierre");
     }
+  } else if (tipo === "GENERICO" && datos) {
+    await prisma.documentoGenerico.create({
+      data: {
+        documentoId: documento.id,
+        contenido: datos.contenido || "",
+        tecnicosIds: JSON.stringify((datos.tecnicosIds ?? []).filter((id: string) => id !== session.user.id)),
+      },
+    });
   } else if (tipo === "MEJORA_MODIFICACION" && datos) {
     await prisma.mejoraModificacion.create({
       data: {

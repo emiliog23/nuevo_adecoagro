@@ -32,6 +32,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       },
       descargaRepuestos: { include: { documentoOrigen: { select: { id: true, titulo: true } } } },
       mejoraModificacion: true,
+      documentoGenerico: true,
       descargasOriginadas: { include: { documento: { select: { id: true, titulo: true } } } },
       carpeta: { select: { id: true, nombre: true } },
     },
@@ -47,6 +48,42 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const body = await req.json();
+
+  // If editing content (not just estado change), verify ownership and save history
+  if (body.edicion) {
+    const current = await prisma.documento.findUnique({
+      where: { id },
+      include: {
+        reporteIntervencion: true, mejoraModificacion: true,
+        documentoGenerico: true, cierreTurno: true,
+      },
+    });
+    if (!current) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    if (current.creadoPorId !== (session.user.id as string)) {
+      return NextResponse.json({ error: "Solo el creador puede editar" }, { status: 403 });
+    }
+    // Save snapshot before change — only relevant sub-document
+    const subDoc =
+      current.reporteIntervencion ??
+      current.mejoraModificacion ??
+      current.documentoGenerico ??
+      current.cierreTurno ?? null;
+
+    await prisma.historialDocumento.create({
+      data: {
+        documentoId: id,
+        editadoPorId: session.user.id as string,
+        resumen: body.resumen ?? "Editó el documento",
+        snapshot: JSON.stringify({
+          titulo: current.titulo,
+          maquinaId: current.maquinaId,
+          ...( subDoc ? { datos: subDoc } : {} ),
+        }),
+      },
+    });
+    // Increment version
+    await prisma.documento.update({ where: { id }, data: { version: { increment: 1 } } });
+  }
 
   const doc = await prisma.documento.update({
     where: { id },
@@ -81,6 +118,58 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         session.user.id as string
       );
     }
+  }
+
+  // Update specific sub-document content for edit mode
+  if (body.tipo === "ORDEN_TRABAJO" && body.datos && body.edicion) {
+    await prisma.ordenTrabajo.update({
+      where: { documentoId: id },
+      data: {
+        descripcion: body.datos.descripcion,
+        prioridad: body.datos.prioridad,
+        observaciones: body.datos.observaciones || null,
+        fechaVencimiento: body.datos.fechaVencimiento ? new Date(body.datos.fechaVencimiento) : null,
+      },
+    });
+  } else if (body.tipo === "REPORTE_INTERVENCION" && body.datos && body.edicion) {
+    await prisma.reporteIntervencion.update({
+      where: { documentoId: id },
+      data: {
+        fechaInicio: body.datos.fechaInicio ? new Date(body.datos.fechaInicio) : undefined,
+        fechaFin: body.datos.fechaFin ? new Date(body.datos.fechaFin) : null,
+        tipoFalla: body.datos.tipoFalla,
+        descripcionFalla: body.datos.descripcionFalla,
+        trabajoRealizado: body.datos.trabajoRealizado,
+        observaciones: body.datos.observaciones || null,
+        tecnicosIds: body.datos.tecnicosIds ? JSON.stringify(body.datos.tecnicosIds) : undefined,
+      },
+    });
+  } else if (body.tipo === "MEJORA_MODIFICACION" && body.datos && body.edicion) {
+    await prisma.mejoraModificacion.update({
+      where: { documentoId: id },
+      data: {
+        fechaInicio: body.datos.fechaInicio ? new Date(body.datos.fechaInicio) : undefined,
+        fechaFin: body.datos.fechaFin ? new Date(body.datos.fechaFin) : null,
+        descripcion: body.datos.descripcion,
+        trabajoRealizado: body.datos.trabajoRealizado,
+        observaciones: body.datos.observaciones || null,
+        tecnicosIds: body.datos.tecnicosIds ? JSON.stringify(body.datos.tecnicosIds) : undefined,
+      },
+    });
+  } else if (body.tipo === "GENERICO" && body.datos && body.edicion) {
+    await prisma.documentoGenerico.update({
+      where: { documentoId: id },
+      data: { contenido: body.datos.contenido, tecnicosIds: JSON.stringify(body.datos.tecnicosIds ?? []) },
+    });
+  } else if (body.tipo === "CIERRE_TURNO" && body.datos && body.edicion) {
+    await prisma.cierreTurno.update({
+      where: { documentoId: id },
+      data: {
+        novedades: body.datos.novedades,
+        trabajosRealizados: body.datos.trabajosRealizados || null,
+        pendientes: body.datos.pendientes || null,
+      },
+    });
   }
 
   return NextResponse.json(doc);

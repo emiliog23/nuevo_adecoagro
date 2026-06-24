@@ -8,6 +8,8 @@ import { TIPO_DOC_LABELS, ESTADO_OT_LABELS, PRIORIDAD_LABELS, TURNO_LABELS } fro
 import { useSession } from "next-auth/react";
 import { ComentariosSection } from "@/components/ComentariosSection";
 import { ImagenesSection } from "@/components/ImagenesSection";
+import { ArchivosSection } from "@/components/ArchivosSection";
+import { HistorialSection } from "@/components/HistorialSection";
 import Link from "next/link";
 import { UserDot } from "@/components/UserDot";
 
@@ -43,6 +45,7 @@ export default function DocumentoPage() {
   if (!doc) return <div className="p-8 text-sm text-red-600">Documento no encontrado</div>;
 
   const canDelete = ["ADMIN", "SUPERVISOR"].includes(session?.user?.role as string);
+  const isCreator = session?.user?.id === doc.creadoPorId;
 
   return (
     <div className="h-full flex flex-col">
@@ -57,6 +60,11 @@ export default function DocumentoPage() {
           </span>
           <h1 className="text-sm font-semibold text-[#1d2023]">{doc.titulo}</h1>
         </div>
+        {isCreator && (
+          <Link href={`/documentos/${id}/editar`} className="text-[#9ea3aa] hover:text-[#1C6B30] transition-colors" title="Editar">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+          </Link>
+        )}
         {canDelete && (
           <button onClick={handleDelete} disabled={deleting} className="text-[#9ea3aa] hover:text-red-500 transition-colors" title="Eliminar">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -88,6 +96,7 @@ export default function DocumentoPage() {
           {doc.tipo === "CIERRE_TURNO" && doc.cierreTurno && <CierreView c={doc.cierreTurno} />}
           {doc.tipo === "DESCARGA_REPUESTOS" && doc.descargaRepuestos && <DescargaView d={doc.descargaRepuestos} />}
           {doc.tipo === "MEJORA_MODIFICACION" && doc.mejoraModificacion && <MejoraView m={doc.mejoraModificacion} />}
+          {doc.tipo === "GENERICO" && doc.documentoGenerico && <GenericoView g={doc.documentoGenerico} />}
           {/* Descargas de repuestos generadas desde este documento */}
           {doc.descargasOriginadas?.length > 0 && (
             <div className="bg-white border border-[#d4d6d8] mt-4">
@@ -115,7 +124,9 @@ export default function DocumentoPage() {
             </div>
           )}
           <ImagenesSection documentoId={id} />
+          <ArchivosSection documentoId={id} />
           <ComentariosSection documentoId={id} />
+          <HistorialSection documentoId={id} />
         </div>
       </div>
     </div>
@@ -343,6 +354,20 @@ function MejoraView({ m }: { m: any }) {
       <Field label="Descripción" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.descripcion}</pre>} />
       <Field label="Trabajo Realizado" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.trabajoRealizado}</pre>} />
       {m.observaciones && <Field label="Observaciones" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.observaciones}</pre>} />}
+    </Section>
+  );
+}
+
+function GenericoView({ g }: { g: any }) {
+  const adicionales: string[] = (() => { try { return JSON.parse(g.tecnicosIds || "[]"); } catch { return []; } })();
+  return (
+    <Section title="Documento">
+      {adicionales.length > 0 && (
+        <Field label="Técnicos" value={<TecnicosAdicionales ids={adicionales} />} />
+      )}
+      {g.contenido && (
+        <Field label="Contenido" value={<pre className="whitespace-pre-wrap font-sans text-sm">{g.contenido}</pre>} />
+      )}
     </Section>
   );
 }

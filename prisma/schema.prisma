@@ -25,6 +25,7 @@ model User {
   lecturas             LecturaDocumento[]
   notificaciones       Notificacion[]
   comentarios          Comentario[]
+  historialEditado     HistorialDocumento[]
 
   @@map("users")
 }
@@ -106,6 +107,7 @@ model Documento {
   creadoPorId String
   importante  Boolean  @default(false)
   archivado   Boolean  @default(false)
+  version     Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -119,10 +121,13 @@ model Documento {
   descargaRepuestos    DescargaRepuestos?
   descargasOriginadas  DescargaRepuestos[]  @relation("DescargaOrigen")
   mejoraModificacion   MejoraModificacion?
+  documentoGenerico    DocumentoGenerico?
   lecturas             LecturaDocumento[]
   comentarios          Comentario[]
   imagenes             ImagenDocumento[]
+  archivos             ArchivoDocumento[]
   notificaciones       Notificacion[]
+  historial            HistorialDocumento[]
 
   @@map("documentos")
 }
@@ -224,6 +229,46 @@ model MejoraModificacion {
   documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
 
   @@map("mejoras_modificaciones")
+}
+
+model DocumentoGenerico {
+  id          String   @id @default(cuid())
+  documentoId String   @unique
+  contenido   String   @default("")
+  tecnicosIds String   @default("[]")
+  createdAt   DateTime @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@map("documentos_genericos")
+}
+
+model ArchivoDocumento {
+  id          String   @id @default(cuid())
+  documentoId String
+  nombre      String
+  url         String
+  mimeType    String   @default("")
+  size        Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@map("archivos_documentos")
+}
+
+model HistorialDocumento {
+  id           String   @id @default(cuid())
+  documentoId  String
+  editadoPorId String
+  resumen      String
+  snapshot     String
+  createdAt    DateTime @default(now())
+
+  documento  Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  editadoPor User      @relation(fields: [editadoPorId], references: [id])
+
+  @@map("historial_documentos")
 }
 
 model LecturaDocumento {

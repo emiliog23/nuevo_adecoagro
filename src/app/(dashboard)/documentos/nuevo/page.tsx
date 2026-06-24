@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { TecnicosInput } from "@/components/TecnicosInput";
+import { ImageDropzone } from "@/components/ImageDropzone";
 import { format } from "date-fns";
 
 const TIPOS = [
@@ -12,6 +13,7 @@ const TIPOS = [
   { value: "ORDEN_TRABAJO",        label: "Orden de Trabajo" },
   { value: "CIERRE_TURNO",         label: "Cierre de Turno" },
   { value: "DESCARGA_REPUESTOS",   label: "Descarga de Repuestos" },
+  { value: "GENERICO",             label: "Documento" },
 ];
 
 const ic = "w-full px-3 py-1.5 border border-[#d4d6d8] text-sm text-[#1d2023] focus:outline-none focus:border-[#1C6B30] bg-white";
@@ -53,6 +55,7 @@ export default function NuevoDocumentoPage() {
     const now = format(new Date(), "yyyy-MM-dd'T'HH:mm");
     if (t === "REPORTE_INTERVENCION") setDatos({ fechaInicio: now, tipoFalla: "", descripcionFalla: "", trabajoRealizado: "", observaciones: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
     else if (t === "MEJORA_MODIFICACION") setDatos({ fechaInicio: now, descripcion: "", trabajoRealizado: "", observaciones: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
+    else if (t === "GENERICO") setDatos({ contenido: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
     else if (t === "ORDEN_TRABAJO") setDatos({ descripcion: "", prioridad: "MEDIA", estado: "PENDIENTE", observaciones: "" });
     else if (t === "CIERRE_TURNO") setDatos({ fecha: now, novedades: "", trabajosRealizados: "", pendientes: "" });
     else if (t === "DESCARGA_REPUESTOS") setDatos({ fecha: now, items: [REPUESTO_VACIO()], observaciones: "" });
@@ -182,6 +185,7 @@ export default function NuevoDocumentoPage() {
                   </p>
                   {tipo === "REPORTE_INTERVENCION" && <ReporteF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "MEJORA_MODIFICACION" && <MejoraF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
+                  {tipo === "GENERICO" && <GenericoF datos={datos} upd={upd} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "ORDEN_TRABAJO" && <OrdenF datos={datos} upd={upd} tecnicos={tecnicos} />}
                   {tipo === "CIERRE_TURNO" && <CierreF datos={datos} upd={upd} setDatos={setDatos} />}
                   {tipo === "DESCARGA_REPUESTOS" && <DescargaF datos={datos} upd={upd} setDatos={setDatos} />}
@@ -274,17 +278,6 @@ function RepuestosInline({ datos, setDatos }: any) {
 // ── Sub-formularios por tipo ──────────────────────────────────────────────────
 
 function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, sessionId }: any) {
-  const imgInputRef = useRef<HTMLInputElement>(null);
-  const previews = imageFiles.map((f: File) => URL.createObjectURL(f));
-
-  function handleImgFiles(files: FileList | null) {
-    if (!files) return;
-    setImageFiles((prev: File[]) => [...prev, ...Array.from(files).filter(f => f.type.startsWith("image/"))]);
-  }
-  function removeImg(idx: number) {
-    setImageFiles((prev: File[]) => prev.filter((_: File, i: number) => i !== idx));
-  }
-
   return <>
     {/* Técnicos — primero */}
     {tecnicos?.length > 0 && sessionId && (
@@ -306,39 +299,16 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, s
     <div><Lbl req>Tipo de Falla</Lbl>
       <select value={datos.tipoFalla ?? ""} onChange={(e) => upd("tipoFalla", e.target.value)} className={se} required>
         <option value="">Seleccionar...</option>
-        {["Mecánica","Eléctrica","Hidráulica","Neumática","Software/Control","Mantenimiento Preventivo","Otro"].map(t => <option key={t}>{t}</option>)}
+        {["Mecánica","Eléctrica","Hidráulica","Neumática","Software/Control","Mantenimiento Preventivo","Cambio de formato","Otro"].map(t => <option key={t}>{t}</option>)}
       </select>
     </div>
     <div><Lbl req>Descripción de la Falla</Lbl><textarea value={datos.descripcionFalla ?? ""} onChange={(e) => upd("descripcionFalla", e.target.value)} className={ta} required /></div>
     <div><Lbl req>Trabajo Realizado</Lbl><textarea value={datos.trabajoRealizado ?? ""} onChange={(e) => upd("trabajoRealizado", e.target.value)} className={ta} required /></div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
 
-    {/* Imágenes — antes de la descarga de repuestos */}
     <div className="border-t border-[#e8e9eb] pt-3 mt-1">
       <Lbl>Imágenes</Lbl>
-      <div
-        className="mt-1 border border-dashed border-[#d4d6d8] p-3 hover:border-[#1C6B30] transition-colors cursor-pointer"
-        onClick={() => imgInputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); handleImgFiles(e.dataTransfer.files); }}
-      >
-        {previews.length === 0 ? (
-          <p className="text-xs text-[#9ea3aa] text-center py-2">Arrastrá imágenes o hacé click · PNG, JPG, WEBP</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {previews.map((src: string, idx: number) => (
-              <div key={idx} className="relative group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-16 h-16 object-cover border border-[#d4d6d8]" />
-                <button type="button" onClick={(e) => { e.stopPropagation(); removeImg(idx); }}
-                  className="absolute top-0 right-0 hidden group-hover:flex w-4 h-4 bg-black/60 text-white text-[9px] items-center justify-center">✕</button>
-              </div>
-            ))}
-            <div className="w-16 h-16 border border-dashed border-[#d4d6d8] flex items-center justify-center text-[#9ea3aa] text-lg">+</div>
-          </div>
-        )}
-      </div>
-      <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImgFiles(e.target.files)} />
+      <ImageDropzone files={imageFiles} onChange={setImageFiles} />
     </div>
 
     <RepuestosInline datos={datos} setDatos={setDatos} />
@@ -446,12 +416,6 @@ function DescargaF({ datos, upd, setDatos }: any) {
 }
 
 function MejoraF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, sessionId }: any) {
-  const imgInputRef = useRef<HTMLInputElement>(null);
-  const previews = imageFiles.map((f: File) => URL.createObjectURL(f));
-  function handleImgFiles(files: FileList | null) {
-    if (!files) return;
-    setImageFiles((prev: File[]) => [...prev, ...Array.from(files).filter(f => f.type.startsWith("image/"))]);
-  }
   return <>
     {tecnicos?.length > 0 && sessionId && (
       <div>
@@ -468,22 +432,23 @@ function MejoraF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, se
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
     <div className="border-t border-[#e8e9eb] pt-3 mt-1">
       <Lbl>Imágenes</Lbl>
-      <div className="mt-1 border border-dashed border-[#d4d6d8] p-3 hover:border-[#1C6B30] transition-colors cursor-pointer" onClick={() => imgInputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleImgFiles(e.dataTransfer.files); }}>
-        {previews.length === 0 ? <p className="text-xs text-[#9ea3aa] text-center py-2">Arrastrá imágenes o hacé click · PNG, JPG, WEBP</p> : (
-          <div className="flex flex-wrap gap-2">
-            {previews.map((src: string, idx: number) => (
-              <div key={idx} className="relative group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-16 h-16 object-cover border border-[#d4d6d8]" />
-                <button type="button" onClick={(e) => { e.stopPropagation(); setImageFiles((p: File[]) => p.filter((_: File, i: number) => i !== idx)); }} className="absolute top-0 right-0 hidden group-hover:flex w-4 h-4 bg-black/60 text-white text-[9px] items-center justify-center">✕</button>
-              </div>
-            ))}
-            <div className="w-16 h-16 border border-dashed border-[#d4d6d8] flex items-center justify-center text-[#9ea3aa] text-lg">+</div>
-          </div>
-        )}
-      </div>
-      <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImgFiles(e.target.files)} />
+      <ImageDropzone files={imageFiles} onChange={setImageFiles} />
     </div>
     <RepuestosInline datos={datos} setDatos={setDatos} />
+  </>;
+}
+
+function GenericoF({ datos, upd, tecnicos, sessionId }: any) {
+  return <>
+    {tecnicos?.length > 0 && sessionId && (
+      <div>
+        <Lbl>Técnicos</Lbl>
+        <TecnicosInput tecnicos={tecnicos} value={datos.tecnicosIds?.length ? datos.tecnicosIds : [sessionId]} creatorId={sessionId} onChange={(ids: string[]) => upd("tecnicosIds", ids)} />
+      </div>
+    )}
+    <div>
+      <Lbl>Contenido</Lbl>
+      <textarea value={datos.contenido ?? ""} onChange={(e) => upd("contenido", e.target.value)} className="w-full px-3 py-2 border border-[#d4d6d8] text-sm text-[#1d2023] focus:outline-none focus:border-[#1C6B30] bg-white resize-y min-h-[200px]" placeholder="Escribí el contenido del documento..." />
+    </div>
   </>;
 }

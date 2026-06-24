@@ -105,9 +105,11 @@ if (loading) return <div className="p-8 text-center text-slate-400">Cargando...<
 
 const TIPOS_NUEVO = [
   { value: "REPORTE_INTERVENCION", label: "Reporte de Intervención", desc: "Falla, corrección y diagnóstico" },
+  { value: "MEJORA_MODIFICACION",  label: "Mejora/Modificación",     desc: "Modificación o mejora de equipo" },
   { value: "ORDEN_TRABAJO",        label: "Orden de Trabajo",        desc: "Tarea planificada o correctiva", supervisorOnly: true },
   { value: "CIERRE_TURNO",         label: "Cierre de Turno",         desc: "Novedades y pendientes del turno" },
   { value: "DESCARGA_REPUESTOS",   label: "Descarga de Repuestos",   desc: "Materiales y repuestos utilizados" },
+  { value: "GENERICO",             label: "Documento",               desc: "Documento de contenido libre" },
 ];
 
 function NuevoDocDropdown({ maquinaId }: { maquinaId: string }) {
