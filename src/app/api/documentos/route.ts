@@ -48,17 +48,20 @@ export async function GET(req: NextRequest) {
         ...(tipo ? { tipo } : {}),
         ...(maquinaId ? { maquinaId } : {}),
         ...(searchIds !== null ? { id: { in: searchIds } } : search ? { titulo: { contains: search, mode: "insensitive" } } : {}),
-        // carpetaId filter goes through per-user DocumentoUsuario
-        ...(carpetaId === "sin-carpeta"
-          ? { NOT: { documentoUsuarios: { some: { userId, carpetaId: { not: null } } } } }
+        // Per-user visibility: merge archivado + carpeta into a single AND to avoid key conflicts
+        AND: soloArchivados
+          // Archivados view: must have archivado=true for this user
+          ? [{ documentoUsuarios: { some: { userId, archivado: true } } }]
           : carpetaId
-          ? { documentoUsuarios: { some: { userId, carpetaId } } }
-          // No carpeta selected → exclude docs that are IN a folder for this user
-          : { NOT: { documentoUsuarios: { some: { userId, carpetaId: { not: null } } } } }),
-        // Per-user archivado filter via DocumentoUsuario
-        ...(soloArchivados
-          ? { documentoUsuarios: { some: { userId, archivado: true } } }
-          : { NOT: { documentoUsuarios: { some: { userId, archivado: true } } } }),
+            // Specific folder: must be in that folder AND not archived
+            ? [
+                { documentoUsuarios: { some: { userId, carpetaId } } },
+                { NOT: { documentoUsuarios: { some: { userId, archivado: true } } } },
+              ]
+            // General / type filter: not archived AND not in any folder
+            : [
+                { NOT: { documentoUsuarios: { some: { userId, OR: [{ archivado: true }, { carpetaId: { not: null } }] } } } },
+              ],
         // Plant hierarchy filters (mutually exclusive, only one active at a time)
         ...(lineaId
           ? { maquina: { lineaId } }
