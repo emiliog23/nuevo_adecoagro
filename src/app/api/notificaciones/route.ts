@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest) {
   const notificaciones = await prisma.notificacion.findMany({
     where: { userId: session.user.id as string },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: 20,
     include: { documento: { select: { id: true, titulo: true, tipo: true } } },
   });
 

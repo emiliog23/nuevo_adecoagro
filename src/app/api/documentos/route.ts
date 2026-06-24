@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search");
   const carpetaId = searchParams.get("carpetaId");
   const soloArchivados = searchParams.get("archivado") === "true";
+  const userId = session.user.id as string;
   const sectorId = searchParams.get("sectorId");
   const subsectorId = searchParams.get("subsectorId");
   const lineaId = searchParams.get("lineaId");
@@ -48,7 +49,10 @@ export async function GET(req: NextRequest) {
         ...(maquinaId ? { maquinaId } : {}),
         ...(searchIds !== null ? { id: { in: searchIds } } : search ? { titulo: { contains: search, mode: "insensitive" } } : {}),
         ...(carpetaId === "sin-carpeta" ? { carpetaId: null } : carpetaId ? { carpetaId } : {}),
-        archivado: soloArchivados ? true : false,
+        // Per-user archivado filter via DocumentoUsuario
+        ...(soloArchivados
+          ? { documentoUsuarios: { some: { userId, archivado: true } } }
+          : { NOT: { documentoUsuarios: { some: { userId, archivado: true } } } }),
         // Plant hierarchy filters (mutually exclusive, only one active at a time)
         ...(lineaId
           ? { maquina: { lineaId } }
@@ -71,15 +75,30 @@ export async function GET(req: NextRequest) {
         cierreTurno: { select: { turno: true, fecha: true } },
         descargaRepuestos: { select: { fecha: true, items: true } },
         lecturas: { select: { userId: true, user: { select: { name: true } } } },
-        carpeta: { select: { id: true, nombre: true } },
         mejoraModificacion: { select: { fechaInicio: true } },
+        documentoUsuarios: {
+          where: { userId },
+          select: { archivado: true, carpetaId: true, carpeta: { select: { id: true, nombre: true } } },
+        },
         documentoGenerico: { select: { contenido: true } },
       },
     }),
     prisma.user.count({ where: { activo: true } }),
   ]);
 
-  return NextResponse.json({ docs: documentos, totalUsuariosActivos });
+  // Flatten per-user state into each document
+  const docs = documentos.map((d) => {
+    const userState = d.documentoUsuarios?.[0];
+    return {
+      ...d,
+      archivado: userState?.archivado ?? false,
+      carpetaId: userState?.carpetaId ?? null,
+      carpeta: userState?.carpeta ?? null,
+      documentoUsuarios: undefined, // remove raw array from response
+    };
+  });
+
+  return NextResponse.json({ docs, totalUsuariosActivos });
 }
 
 export async function POST(req: NextRequest) {

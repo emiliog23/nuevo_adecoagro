@@ -25,6 +25,8 @@ model User {
   lecturas             LecturaDocumento[]
   notificaciones       Notificacion[]
   comentarios          Comentario[]
+  documentoUsuarios    DocumentoUsuario[]
+  carpetas             Carpeta[]
   historialEditado     HistorialDocumento[]
 
   @@map("users")
@@ -111,9 +113,7 @@ model Documento {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  carpetaId           String?
   maquina             Maquina?             @relation(fields: [maquinaId], references: [id])
-  carpeta             Carpeta?             @relation(fields: [carpetaId], references: [id])
   creadoPor           User                 @relation("CreadoPor", fields: [creadoPorId], references: [id])
   reporteIntervencion ReporteIntervencion?
   ordenTrabajo        OrdenTrabajo?
@@ -128,6 +128,7 @@ model Documento {
   archivos             ArchivoDocumento[]
   notificaciones       Notificacion[]
   historial            HistorialDocumento[]
+  documentoUsuarios    DocumentoUsuario[]
 
   @@map("documentos")
 }
@@ -205,14 +206,33 @@ model Carpeta {
   id        String   @id @default(cuid())
   nombre    String
   parentId  String?
+  userId    String?   // null = legacy/shared; non-null = personal folder
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  parent     Carpeta?   @relation("CarpetaChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children   Carpeta[]  @relation("CarpetaChildren")
-  documentos Documento[]
+  parent           Carpeta?           @relation("CarpetaChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children         Carpeta[]          @relation("CarpetaChildren")
+  user             User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentoUsuarios DocumentoUsuario[]
 
   @@map("carpetas")
+}
+
+model DocumentoUsuario {
+  id          String   @id @default(cuid())
+  documentoId String
+  userId      String
+  carpetaId   String?
+  archivado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carpeta   Carpeta?  @relation(fields: [carpetaId], references: [id], onDelete: SetNull)
+
+  @@unique([documentoId, userId])
+  @@map("documento_usuario")
 }
 
 model MejoraModificacion {

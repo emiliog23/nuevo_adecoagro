@@ -23,8 +23,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
 
-  // Unlink documents from this folder before deleting
-  await prisma.documento.updateMany({ where: { carpetaId: id }, data: { carpetaId: null } });
+  // Unlink per-user document associations from this folder
+  await prisma.documentoUsuario.updateMany({ where: { carpetaId: id }, data: { carpetaId: null } });
   await prisma.carpeta.delete({ where: { id } });
 
   return NextResponse.json({ ok: true });

@@ -34,7 +34,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       mejoraModificacion: true,
       documentoGenerico: true,
       descargasOriginadas: { include: { documento: { select: { id: true, titulo: true } } } },
-      carpeta: { select: { id: true, nombre: true } },
+      documentoUsuarios: {
+        where: { userId: session.user.id as string },
+        select: { archivado: true, carpetaId: true, carpeta: { select: { id: true, nombre: true } } },
+      },
     },
   });
 
@@ -181,14 +184,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
+  const userId = session.user.id as string;
 
-  const data: Record<string, unknown> = {};
-  if (body.importante !== undefined) data.importante = body.importante;
-  if (body.archivado !== undefined) data.archivado = body.archivado;
-  if (body.maquinaId !== undefined) data.maquinaId = body.maquinaId || null;
-  if (body.carpetaId !== undefined) data.carpetaId = body.carpetaId || null;
+  // importante and maquinaId are global
+  if (body.importante !== undefined || body.maquinaId !== undefined) {
+    const globalData: Record<string, unknown> = {};
+    if (body.importante !== undefined) globalData.importante = body.importante;
+    if (body.maquinaId !== undefined) globalData.maquinaId = body.maquinaId || null;
+    await prisma.documento.update({ where: { id }, data: globalData });
+  }
 
-  const doc = await prisma.documento.update({ where: { id }, data });
+  // archivado and carpetaId are per-user via DocumentoUsuario
+  if (body.archivado !== undefined || body.carpetaId !== undefined) {
+    const upsertData: Record<string, unknown> = {};
+    if (body.archivado !== undefined) upsertData.archivado = body.archivado;
+    if (body.carpetaId !== undefined) upsertData.carpetaId = body.carpetaId || null;
+
+    await prisma.documentoUsuario.upsert({
+      where: { documentoId_userId: { documentoId: id, userId } },
+      update: upsertData,
+      create: { documentoId: id, userId, ...upsertData },
+    });
+  }
+
+  const doc = await prisma.documento.findUnique({ where: { id } });
   return NextResponse.json(doc);
 }
 

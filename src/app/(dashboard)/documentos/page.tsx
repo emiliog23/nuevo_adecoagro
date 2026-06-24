@@ -60,6 +60,8 @@ export default function DocumentosPage() {
   const totalUsuarios: number = data?.totalUsuariosActivos ?? 0;
   const canDelete = ["ADMIN", "SUPERVISOR"].includes(session?.user?.role as string);
   const docsFiltrados = documentos;
+  const myId = session?.user?.id as string;
+  const noLeidos = docsFiltrados.filter((d) => !d.lecturas?.some((l: any) => l.userId === myId)).length;
 
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; doc: any } | null>(null);
   const [moverModal, setMoverModal] = useState<{ docId: string; maquinaId: string | null } | null>(null);
@@ -124,7 +126,12 @@ export default function DocumentosPage() {
 
       {/* Count bar */}
       <div className="bg-[#f7f8f9] border-b border-[#d4d6d8] px-6 py-1.5">
-        <span className="text-xs text-[#5a5f67]">{docsFiltrados.length} registro{docsFiltrados.length !== 1 ? "s" : ""}</span>
+        <span className="text-xs text-[#5a5f67]">
+          {docsFiltrados.length} registro{docsFiltrados.length !== 1 ? "s" : ""}
+          {noLeidos > 0 && (
+            <span className="ml-2 font-semibold" style={{ color: "#1C6B30" }}>· {noLeidos} sin leer</span>
+          )}
+        </span>
       </div>
 
       {/* Table */}
@@ -162,7 +169,16 @@ export default function DocumentosPage() {
                     (e.currentTarget as HTMLElement).style.opacity = "0.5";
                   }}
                   onDragEnd={(e) => { (e.currentTarget as HTMLElement).style.opacity = ""; }}
-                  className={`border-b border-[#e8e9eb] hover:bg-[#f7f8f9] transition-colors cursor-context-menu ${doc.archivado && !soloArchivados ? "opacity-50" : ""} ${doc.importante ? "border-l-2 border-l-amber-500" : ""}`}
+                  className={`border-b border-[#e8e9eb] transition-colors cursor-context-menu ${doc.archivado && !soloArchivados ? "opacity-50" : ""} ${doc.importante ? "border-l-2 border-l-amber-500" : ""}`}
+                  style={{
+                    backgroundColor: !doc.lecturas?.some((l: any) => l.userId === myId)
+                      ? "#f5f8f5"   // very light green tint = unread
+                      : undefined,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f1f3")}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = !doc.lecturas?.some((l: any) => l.userId === myId) ? "#f5f8f5" : "";
+                  }}
                 >
                   <td className="px-3 py-2 text-center">
                     {doc.importante && <span className="text-amber-500 text-xs">★</span>}
