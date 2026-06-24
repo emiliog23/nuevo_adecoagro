@@ -172,12 +172,12 @@ export default function DocumentosPage() {
                   className={`border-b border-[#e8e9eb] transition-colors cursor-context-menu ${doc.archivado && !soloArchivados ? "opacity-50" : ""} ${doc.importante ? "border-l-2 border-l-amber-500" : ""}`}
                   style={{
                     backgroundColor: !doc.lecturas?.some((l: any) => l.userId === myId)
-                      ? "#f4f4f5"   // light gray = unread
+                      ? "#e8e8eb"   // gray = unread
                       : undefined,
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f1f3")}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = !doc.lecturas?.some((l: any) => l.userId === myId) ? "#f5f8f5" : "";
+                    e.currentTarget.style.backgroundColor = !doc.lecturas?.some((l: any) => l.userId === myId) ? "#e8e8eb" : "";
                   }}
                 >
                   <td className="px-3 py-2 text-center">
