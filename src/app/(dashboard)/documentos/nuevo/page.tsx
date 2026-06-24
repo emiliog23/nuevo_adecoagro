@@ -162,9 +162,6 @@ export default function NuevoDocumentoPage() {
                         ))}
                       </select>
                     </div>
-                    {tipo === "REPORTE_INTERVENCION" && (
-                      <p className="text-[10px] text-[#9ea3aa]">Título automático: Reporte – Máquina – Fecha</p>
-                    )}
                   </div>
                 )}
 
@@ -274,6 +271,19 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, s
   }
 
   return <>
+    {/* Técnicos — primero */}
+    {tecnicos?.length > 0 && sessionId && (
+      <div>
+        <Lbl>Técnicos</Lbl>
+        <TecnicosInput
+          tecnicos={tecnicos}
+          value={datos.tecnicosIds?.length ? datos.tecnicosIds : [sessionId]}
+          creatorId={sessionId}
+          onChange={(ids) => upd("tecnicosIds", ids)}
+        />
+      </div>
+    )}
+
     <div className="grid grid-cols-2 gap-3">
       <div><Lbl req>Inicio</Lbl><input type="datetime-local" value={datos.fechaInicio ?? ""} onChange={(e) => upd("fechaInicio", e.target.value)} className={ic} required /></div>
       <div><Lbl>Fin</Lbl><input type="datetime-local" value={datos.fechaFin ?? ""} onChange={(e) => upd("fechaFin", e.target.value)} className={ic} /></div>
@@ -287,20 +297,6 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, s
     <div><Lbl req>Descripción de la Falla</Lbl><textarea value={datos.descripcionFalla ?? ""} onChange={(e) => upd("descripcionFalla", e.target.value)} className={ta} required /></div>
     <div><Lbl req>Trabajo Realizado</Lbl><textarea value={datos.trabajoRealizado ?? ""} onChange={(e) => upd("trabajoRealizado", e.target.value)} className={ta} required /></div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
-
-    {/* Técnicos */}
-    {tecnicos?.length > 0 && sessionId && (
-      <div>
-        <Lbl>Técnicos</Lbl>
-        <TecnicosInput
-          tecnicos={tecnicos}
-          value={datos.tecnicosIds?.length ? datos.tecnicosIds : [sessionId]}
-          creatorId={sessionId}
-          onChange={(ids) => upd("tecnicosIds", ids)}
-        />
-        <p className="text-[10px] text-[#9ea3aa] mt-1">Escribí para buscar y agregar más técnicos participantes.</p>
-      </div>
-    )}
 
     {/* Imágenes — antes de la descarga de repuestos */}
     <div className="border-t border-[#e8e9eb] pt-3 mt-1">
