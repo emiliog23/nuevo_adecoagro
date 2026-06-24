@@ -37,6 +37,8 @@ export async function GET(req: NextRequest) {
       descargaItems,
       otsPorTecnicoRaw,
       totalOT,
+      docsConColor,
+      reportesConColor,
     ] = await Promise.all([
       prisma.documento.count({ where }),
       prisma.documento.groupBy({ by: ["tipo"], where, _count: { _all: true } }),
@@ -72,6 +74,19 @@ export async function GET(req: NextRequest) {
         _count: { _all: true },
       }),
       prisma.ordenTrabajo.count({ where: { documento: { createdAt: { gte: desde, lte: hasta } } } }),
+      // Documentos con color del creador
+      prisma.documento.findMany({
+        where,
+        select: { creadoPor: { select: { color: true } } },
+      }),
+      // Reportes con color del creador y duración
+      prisma.reporteIntervencion.findMany({
+        where: { documento: { createdAt: { gte: desde, lte: hasta } } },
+        select: {
+          fechaInicio: true, fechaFin: true,
+          documento: { select: { creadoPor: { select: { color: true } } } },
+        },
+      }),
     ]);
 
     // Duración promedio
@@ -126,6 +141,42 @@ export async function GET(req: NextRequest) {
     const tecNombres = await prisma.user.findMany({ where: { id: { in: tecIds } }, select: { id: true, name: true, color: true } });
     const tecMap = Object.fromEntries(tecNombres.map((t) => [t.id, { name: t.name, color: t.color }]));
 
+    // ── Nuevos KPIs ─────────────────────────────────────────────────────────
+
+    // Tiempo promedio por tipo de falla
+    const durPorFalla: Record<string, number[]> = {};
+    reportes.filter((r) => r.fechaFin).forEach((r) => {
+      const mins = (new Date(r.fechaFin!).getTime() - new Date(r.fechaInicio).getTime()) / 60000;
+      if (!durPorFalla[r.tipoFalla]) durPorFalla[r.tipoFalla] = [];
+      durPorFalla[r.tipoFalla].push(mins);
+    });
+    const tiempoPorFalla = Object.entries(durPorFalla)
+      .map(([tipoFalla, mins]) => ({
+        tipoFalla,
+        avgMin: Math.round(mins.reduce((a, b) => a + b, 0) / mins.length),
+        count: mins.length,
+      }))
+      .sort((a, b) => b.avgMin - a.avgMin);
+
+    // Documentos por color de usuario
+    const countColor: Record<string, number> = {};
+    docsConColor.forEach((d: any) => {
+      const c = d.creadoPor?.color ?? "AZUL";
+      countColor[c] = (countColor[c] ?? 0) + 1;
+    });
+    const docsPorColor = Object.entries(countColor).map(([color, count]) => ({ color, count }));
+
+    // Horas de intervención por color de usuario
+    const horasColor: Record<string, number> = {};
+    reportesConColor.forEach((r: any) => {
+      if (!r.fechaFin) return;
+      const mins = (new Date(r.fechaFin).getTime() - new Date(r.fechaInicio).getTime()) / 60000;
+      const c = r.documento?.creadoPor?.color ?? "AZUL";
+      horasColor[c] = (horasColor[c] ?? 0) + mins;
+    });
+    const horasPorColor = Object.entries(horasColor)
+      .map(([color, totalMin]) => ({ color, horas: Math.round(totalMin / 60 * 10) / 10 }));
+
     return NextResponse.json({
       periodo: { desde: desde.toISOString(), hasta: hasta.toISOString() },
       totalDocumentos,
@@ -146,6 +197,9 @@ export async function GET(req: NextRequest) {
       tecnicosInterv: tecIntervSorted.map((t) => ({ ...tecMap[t.tecnicoId], count: t._count._all })),
       tecnicosOT: otsTecSorted.map((t) => ({ ...tecMap[t.tecnicoId!], count: t._count._all })),
       repuestosTop,
+      tiempoPorFalla,
+      docsPorColor,
+      horasPorColor,
     });
   } catch (error) {
     console.error("[analytics] Error:", error);

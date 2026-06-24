@@ -369,7 +369,7 @@ function CierreF({ datos, upd, setDatos }: any) {
         <input type="datetime-local" value={datos.fecha ?? ""} onChange={(e) => upd("fecha", e.target.value)} className={ic} required />
       </div>
       <div>
-        <Lbl> </Lbl>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1 invisible">placeholder</label>
         <div className="px-3 py-1.5 border border-[#d4d6d8] bg-[#f7f8f9] text-sm text-[#1d2023] flex items-center justify-between">
           <span className="font-semibold">Turno {turnoLabel}</span>
           <span className="text-xs text-[#9ea3aa]">{TURNO_RANGES[turnoDetectado]}</span>

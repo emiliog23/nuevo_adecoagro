@@ -16,6 +16,7 @@ const PRIORIDAD_LABEL: Record<string, string> = { BAJA: "Baja", MEDIA: "Media", 
 const TIPO_LABEL: Record<string, string> = { REPORTE_INTERVENCION: "Reportes", ORDEN_TRABAJO: "OT", CIERRE_TURNO: "Cierres", DESCARGA_REPUESTOS: "Descargas" };
 const TURNO_LABEL: Record<string, string> = { MANANA: "Mañana", TARDE: "Tarde", NOCHE: "Noche" };
 const COLOR_USER: Record<string, string> = { AZUL: "#3b82f6", ROJO: "#ef4444", VERDE: "#16a34a", AMARILLO: "#eab308", BLANCO: "#d1d5db" };
+const COLOR_NOMBRE: Record<string, string> = { AZUL: "Azul", ROJO: "Rojo", VERDE: "Verde", AMARILLO: "Amarillo", BLANCO: "Central" };
 const CHART_COLORS = ["#1C6B30", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#3b82f6", "#ef4444", "#eab308"];
 
 const PERIODOS = [
@@ -249,6 +250,56 @@ export default function AnalisisPage() {
             </ResponsiveContainer>
           </Card>
         )}
+        {/* Tiempo promedio por tipo de falla */}
+        {data.tiempoPorFalla?.length > 0 && (
+          <Card title="Tiempo promedio por tipo de falla">
+            <ResponsiveContainer width="100%" height={Math.max(180, data.tiempoPorFalla.length * 32)}>
+              <BarChart data={data.tiempoPorFalla} layout="vertical">
+                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.floor(v/60)}h${v%60 ? ` ${v%60}m` : ""}`} />
+                <YAxis type="category" dataKey="tipoFalla" tick={{ fontSize: 10 }} width={150} />
+                <Tooltip />
+                <Bar dataKey="avgMin" fill="#374151" name="Duración promedio" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        )}
+
+        {/* Por color de usuario */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card title="Documentos por color de usuario">
+            {data.docsPorColor?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.docsPorColor}>
+                  <XAxis dataKey="color" tick={{ fontSize: 10 }} tickFormatter={(v) => COLOR_NOMBRE[v] ?? v} />
+                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                  <Tooltip labelFormatter={(v) => COLOR_NOMBRE[v] ?? v} />
+                  <Bar dataKey="count" name="Documentos">
+                    {data.docsPorColor.map((d: any, i: number) => (
+                      <Cell key={i} fill={COLOR_USER[d.color ?? ""] ?? CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <p className="text-xs text-[#9ea3aa] text-center py-8">Sin datos</p>}
+          </Card>
+
+          <Card title="Horas de intervención por color de usuario">
+            {data.horasPorColor?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.horasPorColor}>
+                  <XAxis dataKey="color" tick={{ fontSize: 10 }} tickFormatter={(v) => COLOR_NOMBRE[v] ?? v} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip labelFormatter={(v) => COLOR_NOMBRE[v] ?? v} />
+                  <Bar dataKey="horas" name="Horas">
+                    {data.horasPorColor.map((d: any, i: number) => (
+                      <Cell key={i} fill={COLOR_USER[d.color ?? ""] ?? CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <p className="text-xs text-[#9ea3aa] text-center py-8">Sin intervenciones con duración registrada</p>}
+          </Card>
+        </div>
       </div>
     </div>
   );
