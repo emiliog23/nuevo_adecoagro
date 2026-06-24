@@ -185,9 +185,21 @@ function duracion(inicio: string, fin: string): string {
 }
 
 function ReporteView({ r }: { r: any }) {
+  const adicionales: string[] = (() => { try { return JSON.parse(r.tecnicosIds || "[]"); } catch { return []; } })();
+
+  // Build technician display
+  const tecnicosList = [r.tecnico?.name].filter(Boolean);
+  // Additional technician names come via the doc creadoPor — we just show IDs here
+  // They'll be resolved client-side if needed; for now show count
+
   return (
     <Section title="Reporte de Intervención">
-      <Field label="Técnico" value={r.tecnico?.name} />
+      <Field label="Técnico responsable" value={r.tecnico?.name} />
+      {adicionales.length > 0 && (
+        <Field label="Otros participantes" value={
+          <TecnicosAdicionales ids={adicionales} />
+        } />
+      )}
       <Field label="Inicio" value={format(new Date(r.fechaInicio), "d MMM yyyy HH:mm", { locale: es })} />
       {r.fechaFin && (
         <>
@@ -201,6 +213,21 @@ function ReporteView({ r }: { r: any }) {
       {r.observaciones && <Field label="Observaciones" value={<pre className="whitespace-pre-wrap font-sans text-sm">{r.observaciones}</pre>} />}
     </Section>
   );
+}
+
+function TecnicosAdicionales({ ids }: { ids: string[] }) {
+  const [nombres, setNombres] = useState<string[]>([]);
+  useEffect(() => {
+    if (!ids.length) return;
+    fetch("/api/usuarios")
+      .then(r => r.json())
+      .then((users: any[]) => {
+        setNombres(users.filter(u => ids.includes(u.id)).map(u => u.name));
+      })
+      .catch(() => {});
+  }, [ids]);
+  if (!nombres.length) return <span className="text-[#9ea3aa]">Cargando...</span>;
+  return <span>{nombres.join(", ")}</span>;
 }
 
 function OrdenView({ ot, docId }: { ot: any; docId: string }) {
@@ -244,7 +271,6 @@ function OrdenView({ ot, docId }: { ot: any; docId: string }) {
 function CierreView({ c }: { c: any }) {
   return (
     <Section title="Cierre de Turno">
-      <Field label="Técnico" value={c.operador?.name} />
       <Field label="Fecha" value={format(new Date(c.fecha), "d MMM yyyy HH:mm", { locale: es })} />
       <Field label="Turno" value={TURNO_LABELS[c.turno as keyof typeof TURNO_LABELS] ?? c.turno} />
       <Field label="Novedades" value={<pre className="whitespace-pre-wrap font-sans text-sm">{c.novedades}</pre>} />

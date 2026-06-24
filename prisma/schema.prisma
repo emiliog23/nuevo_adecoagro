@@ -136,6 +136,7 @@ model ReporteIntervencion {
   trabajoRealizado String
   observaciones    String?
   tecnicoId        String
+  tecnicosIds      String    @default("[]")  // JSON array of additional participant user IDs
   createdAt        DateTime  @default(now())
 
   documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)

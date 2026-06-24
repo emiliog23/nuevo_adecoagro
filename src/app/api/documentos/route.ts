@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
         trabajoRealizado: datos.trabajoRealizado,
         observaciones: datos.observaciones || null,
         tecnicoId: session.user.id as string,
+        tecnicosIds: JSON.stringify(datos.tecnicosIds ?? []),
       },
     });
     // Auto-create linked descarga if repuestos provided

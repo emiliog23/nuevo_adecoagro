@@ -172,7 +172,7 @@ export default function NuevoDocumentoPage() {
                   <p className="text-xs font-semibold text-[#5a5f67] uppercase tracking-wider border-b border-[#e8e9eb] pb-2">
                     {TIPOS.find(t => t.value === tipo)?.label}
                   </p>
-                  {tipo === "REPORTE_INTERVENCION" && <ReporteF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} />}
+                  {tipo === "REPORTE_INTERVENCION" && <ReporteF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "ORDEN_TRABAJO" && <OrdenF datos={datos} upd={upd} tecnicos={tecnicos} />}
                   {tipo === "CIERRE_TURNO" && <CierreF datos={datos} upd={upd} setDatos={setDatos} />}
                   {tipo === "DESCARGA_REPUESTOS" && <DescargaF datos={datos} upd={upd} setDatos={setDatos} />}
@@ -260,7 +260,7 @@ function RepuestosInline({ datos, setDatos }: any) {
 
 // ── Sub-formularios por tipo ──────────────────────────────────────────────────
 
-function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles }: any) {
+function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, sessionId }: any) {
   const imgInputRef = useRef<HTMLInputElement>(null);
   const previews = imageFiles.map((f: File) => URL.createObjectURL(f));
 
@@ -286,6 +286,31 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles }: any) {
     <div><Lbl req>Descripción de la Falla</Lbl><textarea value={datos.descripcionFalla ?? ""} onChange={(e) => upd("descripcionFalla", e.target.value)} className={ta} required /></div>
     <div><Lbl req>Trabajo Realizado</Lbl><textarea value={datos.trabajoRealizado ?? ""} onChange={(e) => upd("trabajoRealizado", e.target.value)} className={ta} required /></div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
+
+    {/* Técnicos participantes */}
+    {tecnicos?.length > 0 && (
+      <div>
+        <Lbl>Otros técnicos participantes</Lbl>
+        <div className="grid grid-cols-2 gap-1.5 mt-1">
+          {tecnicos.filter((t: any) => t.id !== sessionId).map((t: any) => {
+            const ids: string[] = datos.tecnicosIds ?? [];
+            const checked = ids.includes(t.id);
+            return (
+              <label key={t.id} className="flex items-center gap-2 px-3 py-2 border border-[#d4d6d8] cursor-pointer hover:bg-[#f7f8f9] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => upd("tecnicosIds", checked ? ids.filter((x: string) => x !== t.id) : [...ids, t.id])}
+                  className="accent-[#1C6B30] w-3.5 h-3.5"
+                />
+                <span className="text-sm text-[#1d2023] truncate">{t.name}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-[#9ea3aa] mt-1">Vos ya estás incluido como técnico responsable.</p>
+      </div>
+    )}
 
     {/* Imágenes — antes de la descarga de repuestos */}
     <div className="border-t border-[#e8e9eb] pt-3 mt-1">

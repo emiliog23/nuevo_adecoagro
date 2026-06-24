@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         },
       },
       reporteIntervencion: {
-        include: { tecnico: { select: { id: true, name: true } } },
+        include: { tecnico: { select: { id: true, name: true, color: true } } },
       },
       ordenTrabajo: {
         include: { tecnico: { select: { id: true, name: true } } },
