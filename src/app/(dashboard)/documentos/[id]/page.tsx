@@ -291,6 +291,7 @@ function DescargaView({ d }: { d: any }) {
         <thead>
           <tr className="border-b border-[#e8e9eb] bg-[#f7f8f9]">
             <th className="text-left text-xs font-semibold text-[#5a5f67] px-4 py-2">Nombre</th>
+            <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2 hidden sm:table-cell">Código</th>
             <th className="text-right text-xs font-semibold text-[#5a5f67] px-4 py-2">Cantidad</th>
             <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2 hidden sm:table-cell">Estantería</th>
             <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2 hidden sm:table-cell">Estante</th>
@@ -301,6 +302,7 @@ function DescargaView({ d }: { d: any }) {
           {items.map((item: any, idx: number) => (
             <tr key={idx} className="border-b border-[#e8e9eb]">
               <td className="px-4 py-2 text-[#1d2023]">{item.nombre || item.descripcion || "—"}</td>
+              <td className="px-3 py-2 text-[#5a5f67] font-mono text-xs hidden sm:table-cell">{item.codigo || "—"}</td>
               <td className="px-4 py-2 text-right font-medium text-[#1d2023]">{item.cantidad ?? "—"}</td>
               <td className="px-3 py-2 text-[#5a5f67] hidden sm:table-cell">{item.estanteria || "—"}</td>
               <td className="px-3 py-2 text-[#5a5f67] hidden sm:table-cell">{item.estante || "—"}</td>
@@ -311,7 +313,7 @@ function DescargaView({ d }: { d: any }) {
         <tfoot>
           <tr className="border-t border-[#d4d6d8] bg-[#f7f8f9]">
             <td className="px-4 py-2 text-xs font-semibold text-[#5a5f67]">Total: {items.length} ítem{items.length !== 1 ? "s" : ""}</td>
-            <td colSpan={4}></td>
+            <td colSpan={5}></td>
           </tr>
         </tfoot>
       </table>

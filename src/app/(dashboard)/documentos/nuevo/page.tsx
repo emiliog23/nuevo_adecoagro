@@ -22,7 +22,7 @@ function Lbl({ children, req }: { children: React.ReactNode; req?: boolean }) {
   return <label className="block text-xs font-semibold text-[#5a5f67] uppercase tracking-wider mb-1">{children}{req && " *"}</label>;
 }
 
-const REPUESTO_VACIO = () => ({ nombre: "", cantidad: "", estanteria: "", estante: "", cajon: "" });
+const REPUESTO_VACIO = () => ({ codigo: "", nombre: "", cantidad: "", estanteria: "", estante: "", cajon: "" });
 const COLOR_LABEL_MAP: Record<string, string> = { AZUL: "Azul", ROJO: "Rojo", VERDE: "Verde", AMARILLO: "Amarillo" };
 
 export default function NuevoDocumentoPage() {
@@ -230,6 +230,10 @@ function RepuestosInline({ datos, setDatos }: any) {
                   <input value={item.nombre} onChange={(e) => updItem(idx, "nombre", e.target.value)} className={celda} required={show} />
                 </div>
                 <div>
+                  <Lbl>Código</Lbl>
+                  <input value={item.codigo ?? ""} onChange={(e) => updItem(idx, "codigo", e.target.value)} className={celda} />
+                </div>
+                <div>
                   <Lbl>Cantidad</Lbl>
                   <input type="number" min="0.01" step="any" value={item.cantidad} onChange={(e) => updItem(idx, "cantidad", e.target.value)} className={celda} />
                 </div>
@@ -416,6 +420,7 @@ function DescargaF({ datos, upd, setDatos }: any) {
             className="absolute top-2 right-2 text-[#9ea3aa] hover:text-red-500 disabled:opacity-30 text-xs">✕</button>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div className="col-span-2"><Lbl>Nombre</Lbl><input value={item.nombre ?? ""} onChange={(e) => updItem(idx, "nombre", e.target.value)} className={celda} required /></div>
+            <div><Lbl>Código</Lbl><input value={item.codigo ?? ""} onChange={(e) => updItem(idx, "codigo", e.target.value)} className={celda} /></div>
             <div><Lbl>Cantidad</Lbl><input type="number" min="0.01" step="any" value={item.cantidad ?? ""} onChange={(e) => updItem(idx, "cantidad", e.target.value)} className={celda} /></div>
             <div><Lbl>Estantería</Lbl><input value={item.estanteria ?? ""} onChange={(e) => updItem(idx, "estanteria", e.target.value)} className={celda} /></div>
             <div><Lbl>Estante</Lbl><input value={item.estante ?? ""} onChange={(e) => updItem(idx, "estante", e.target.value)} className={celda} /></div>
