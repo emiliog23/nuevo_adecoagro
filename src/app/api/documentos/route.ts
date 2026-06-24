@@ -53,7 +53,8 @@ export async function GET(req: NextRequest) {
           ? { NOT: { documentoUsuarios: { some: { userId, carpetaId: { not: null } } } } }
           : carpetaId
           ? { documentoUsuarios: { some: { userId, carpetaId } } }
-          : {}),
+          // No carpeta selected → exclude docs that are IN a folder for this user
+          : { NOT: { documentoUsuarios: { some: { userId, carpetaId: { not: null } } } } }),
         // Per-user archivado filter via DocumentoUsuario
         ...(soloArchivados
           ? { documentoUsuarios: { some: { userId, archivado: true } } }
