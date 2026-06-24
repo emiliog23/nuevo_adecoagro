@@ -60,7 +60,7 @@ export function TecnicosInput({ tecnicos, value, creatorId, onChange }: Props) {
         onClick={() => inputRef.current?.focus()}
       >
         {selected.map(t => (
-          <span key={t.id} className="inline-flex items-center gap-1 bg-[#e8f2eb] text-[#1d2023] text-xs px-2 py-1 rounded">
+          <span key={t.id} className="inline-flex items-center gap-1 bg-[#e8e9eb] text-[#1d2023] text-xs px-2 py-1 rounded">
             {t.name}
             {t.id !== creatorId && (
               <button
