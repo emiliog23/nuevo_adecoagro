@@ -21,7 +21,7 @@ const TIPOS_DOC = [
   { tipo: "ORDEN_TRABAJO",         label: "Órdenes de Trabajo" },
   { tipo: "CIERRE_TURNO",          label: "Cierres de Turno" },
   { tipo: "DESCARGA_REPUESTOS",    label: "Descargas de Repuestos" },
-  { tipo: "GENERICO",              label: "Documentos" },
+  { tipo: "GENERICO",              label: "Genericos" },
 ];
 
 const adminNav: NavItem[] = [

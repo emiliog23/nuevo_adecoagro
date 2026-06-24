@@ -266,7 +266,7 @@ export default function AnalisisPage() {
 
         {/* Por color de usuario */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card title="Documentos por color de usuario">
+          <Card title="Documentos por turno">
             {data.docsPorColor?.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={data.docsPorColor}>
@@ -283,7 +283,7 @@ export default function AnalisisPage() {
             ) : <p className="text-xs text-[#9ea3aa] text-center py-8">Sin datos</p>}
           </Card>
 
-          <Card title="Horas de intervención por color de usuario">
+          <Card title="Horas de intervención por turno">
             {data.horasPorColor?.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={data.horasPorColor}>
