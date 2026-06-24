@@ -26,12 +26,27 @@ export async function GET(req: NextRequest) {
   const subsectorId = searchParams.get("subsectorId");
   const lineaId = searchParams.get("lineaId");
 
+  // Accent + case insensitive search via PostgreSQL unaccent
+  let searchIds: string[] | null = null;
+  if (search?.trim()) {
+    try {
+      const raw = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM documentos
+        WHERE unaccent(LOWER(titulo)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
+      `;
+      searchIds = raw.map((r) => r.id);
+    } catch {
+      // Fallback if unaccent not available
+      searchIds = null;
+    }
+  }
+
   const [documentos, totalUsuariosActivos] = await Promise.all([
     prisma.documento.findMany({
       where: {
         ...(tipo ? { tipo } : {}),
         ...(maquinaId ? { maquinaId } : {}),
-        ...(search ? { titulo: { contains: search } } : {}),
+        ...(searchIds !== null ? { id: { in: searchIds } } : search ? { titulo: { contains: search, mode: "insensitive" } } : {}),
         ...(carpetaId === "sin-carpeta" ? { carpetaId: null } : carpetaId ? { carpetaId } : {}),
         archivado: soloArchivados ? true : false,
         // Plant hierarchy filters (mutually exclusive, only one active at a time)
