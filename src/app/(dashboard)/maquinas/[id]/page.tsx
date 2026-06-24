@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -46,15 +46,7 @@ if (loading) return <div className="p-8 text-center text-slate-400">Cargando...<
             {maquina.codigo && <span className="text-sm text-slate-400 font-mono">{maquina.codigo}</span>}
           </div>
         </div>
-        <Link
-          href={`/documentos/nuevo?maquinaId=${id}`}
-          className="bg-[#1C6B30] hover:bg-[#155024] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shrink-0"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo Documento
-        </Link>
+        <NuevoDocDropdown maquinaId={id} />
       </div>
 
       {maquina.descripcion && (
@@ -107,6 +99,52 @@ if (loading) return <div className="p-8 text-center text-slate-400">Cargando...<
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const TIPOS_NUEVO = [
+  { value: "REPORTE_INTERVENCION", label: "Reporte de Intervención", desc: "Falla, corrección y diagnóstico" },
+  { value: "ORDEN_TRABAJO",        label: "Orden de Trabajo",        desc: "Tarea planificada o correctiva", supervisorOnly: true },
+  { value: "CIERRE_TURNO",         label: "Cierre de Turno",         desc: "Novedades y pendientes del turno" },
+  { value: "DESCARGA_REPUESTOS",   label: "Descarga de Repuestos",   desc: "Materiales y repuestos utilizados" },
+];
+
+function NuevoDocDropdown({ maquinaId }: { maquinaId: string }) {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const canOT = ["ADMIN", "SUPERVISOR"].includes(session?.user?.role ?? "");
+
+  useEffect(() => {
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const tipos = TIPOS_NUEVO.filter(t => !t.supervisorOnly || canOT);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button onClick={() => setOpen(p => !p)}
+        className="flex items-center gap-2 text-sm font-semibold text-white px-3 py-1.5 transition-colors"
+        style={{ backgroundColor: "#1C6B30" }}>
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+        Nuevo Documento
+        <svg className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 bg-white border border-[#d4d6d8] z-50 w-60 shadow-md">
+          {tipos.map(t => (
+            <button key={t.value} onClick={() => { setOpen(false); router.push(`/documentos/nuevo?tipo=${t.value}&maquinaId=${maquinaId}`); }}
+              className="w-full flex flex-col px-4 py-2.5 hover:bg-[#f7f8f9] text-left border-b border-[#e8e9eb] last:border-0 transition-colors">
+              <span className="text-sm font-medium text-[#1d2023]">{t.label}</span>
+              <span className="text-[10px] text-[#9ea3aa]">{t.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

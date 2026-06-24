@@ -133,7 +133,7 @@ export default function DocumentosPage() {
         ) : docsFiltrados.length === 0 ? (
           <div className="p-12 text-center text-sm text-[#5a5f67]">
             Sin documentos.{" "}
-            <button onClick={() => router.push("/documentos/nuevo")} className="text-[#1C6B30] hover:underline">Crear</button>
+            <NuevoDocumentoDropdown />
           </div>
         ) : (
           <table className="w-full text-sm">
