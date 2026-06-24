@@ -194,12 +194,11 @@ function ReporteView({ r }: { r: any }) {
 
   return (
     <Section title="Reporte de Intervención">
-      <Field label="Técnico responsable" value={r.tecnico?.name} />
-      {adicionales.length > 0 && (
-        <Field label="Otros participantes" value={
-          <TecnicosAdicionales ids={adicionales} />
-        } />
-      )}
+      <Field label="Técnicos" value={
+        adicionales.length > 0
+          ? <>{r.tecnico?.name} + <TecnicosAdicionales ids={adicionales} /></>
+          : r.tecnico?.name
+      } />
       <Field label="Inicio" value={format(new Date(r.fechaInicio), "d MMM yyyy HH:mm", { locale: es })} />
       {r.fechaFin && (
         <>

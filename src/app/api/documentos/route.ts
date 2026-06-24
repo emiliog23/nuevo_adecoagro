@@ -90,7 +90,8 @@ export async function POST(req: NextRequest) {
         trabajoRealizado: datos.trabajoRealizado,
         observaciones: datos.observaciones || null,
         tecnicoId: session.user.id as string,
-        tecnicosIds: JSON.stringify(datos.tecnicosIds ?? []),
+        // tecnicosIds includes ALL participants; exclude creator (already in tecnicoId) for storage
+        tecnicosIds: JSON.stringify((datos.tecnicosIds ?? []).filter((id: string) => id !== session.user.id)),
       },
     });
     // Auto-create linked descarga if repuestos provided

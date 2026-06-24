@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { TecnicosInput } from "@/components/TecnicosInput";
 import { format } from "date-fns";
 
 const TIPOS = [
@@ -49,7 +50,7 @@ export default function NuevoDocumentoPage() {
   function init(t: string) {
     setTipo(t);
     const now = format(new Date(), "yyyy-MM-dd'T'HH:mm");
-    if (t === "REPORTE_INTERVENCION") setDatos({ fechaInicio: now, tipoFalla: "", descripcionFalla: "", trabajoRealizado: "", observaciones: "" });
+    if (t === "REPORTE_INTERVENCION") setDatos({ fechaInicio: now, tipoFalla: "", descripcionFalla: "", trabajoRealizado: "", observaciones: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
     else if (t === "ORDEN_TRABAJO") setDatos({ descripcion: "", prioridad: "MEDIA", estado: "PENDIENTE", observaciones: "" });
     else if (t === "CIERRE_TURNO") setDatos({ fecha: now, novedades: "", trabajosRealizados: "", pendientes: "" });
     else if (t === "DESCARGA_REPUESTOS") setDatos({ fecha: now, items: [REPUESTO_VACIO()], observaciones: "" });
@@ -287,28 +288,17 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, s
     <div><Lbl req>Trabajo Realizado</Lbl><textarea value={datos.trabajoRealizado ?? ""} onChange={(e) => upd("trabajoRealizado", e.target.value)} className={ta} required /></div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
 
-    {/* Técnicos participantes */}
-    {tecnicos?.length > 0 && (
+    {/* Técnicos */}
+    {tecnicos?.length > 0 && sessionId && (
       <div>
-        <Lbl>Otros técnicos participantes</Lbl>
-        <div className="grid grid-cols-2 gap-1.5 mt-1">
-          {tecnicos.filter((t: any) => t.id !== sessionId).map((t: any) => {
-            const ids: string[] = datos.tecnicosIds ?? [];
-            const checked = ids.includes(t.id);
-            return (
-              <label key={t.id} className="flex items-center gap-2 px-3 py-2 border border-[#d4d6d8] cursor-pointer hover:bg-[#f7f8f9] transition-colors">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => upd("tecnicosIds", checked ? ids.filter((x: string) => x !== t.id) : [...ids, t.id])}
-                  className="accent-[#1C6B30] w-3.5 h-3.5"
-                />
-                <span className="text-sm text-[#1d2023] truncate">{t.name}</span>
-              </label>
-            );
-          })}
-        </div>
-        <p className="text-[10px] text-[#9ea3aa] mt-1">Vos ya estás incluido como técnico responsable.</p>
+        <Lbl>Técnicos</Lbl>
+        <TecnicosInput
+          tecnicos={tecnicos}
+          value={datos.tecnicosIds?.length ? datos.tecnicosIds : [sessionId]}
+          creatorId={sessionId}
+          onChange={(ids) => upd("tecnicosIds", ids)}
+        />
+        <p className="text-[10px] text-[#9ea3aa] mt-1">Escribí para buscar y agregar más técnicos participantes.</p>
       </div>
     )}
 
