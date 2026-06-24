@@ -244,7 +244,7 @@ function OrdenView({ ot, docId }: { ot: any; docId: string }) {
 function CierreView({ c }: { c: any }) {
   return (
     <Section title="Cierre de Turno">
-      <Field label="Operador" value={c.operador?.name} />
+      <Field label="Técnico" value={c.operador?.name} />
       <Field label="Fecha" value={format(new Date(c.fecha), "d MMM yyyy HH:mm", { locale: es })} />
       <Field label="Turno" value={TURNO_LABELS[c.turno as keyof typeof TURNO_LABELS] ?? c.turno} />
       <Field label="Novedades" value={<pre className="whitespace-pre-wrap font-sans text-sm">{c.novedades}</pre>} />
