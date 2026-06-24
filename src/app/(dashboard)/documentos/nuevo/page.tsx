@@ -81,6 +81,11 @@ export default function NuevoDocumentoPage() {
       const colorLabel = COLOR_LABEL_MAP[color] ?? color;
       return `Cierre de Turno – Turno ${TURNO_LABEL[turno]} – ${colorLabel} – ${fecha}`;
     }
+    if (tipo === "DESCARGA_REPUESTOS") {
+      const maq = maquinas.find((m) => m.id === maquinaId);
+      const fecha = format(new Date(datos.fecha ?? new Date()), "dd/MM/yyyy HH:mm");
+      return maq ? `Descarga Repuestos – ${maq.nombre} – ${fecha}` : `Descarga Repuestos – ${fecha}`;
+    }
     return titulo;
   }
 
@@ -111,7 +116,7 @@ export default function NuevoDocumentoPage() {
     } else { const d = await res.json(); setError(d.error ?? "Error al guardar"); setSaving(false); }
   }
 
-  const esAutoTitulo = tipo === "REPORTE_INTERVENCION" || tipo === "CIERRE_TURNO";
+  const esAutoTitulo = tipo === "REPORTE_INTERVENCION" || tipo === "CIERRE_TURNO" || tipo === "DESCARGA_REPUESTOS";
 
   return (
     <div className="h-full flex flex-col">
