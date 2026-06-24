@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] as string,
+    // Railway uses "railwaypostgresql://" internally — normalize to standard "postgresql://"
+    url: (process.env["DATABASE_URL"] as string || "").replace(/^railwaypostgresql:\/\//, "postgresql://"),
   },
 });

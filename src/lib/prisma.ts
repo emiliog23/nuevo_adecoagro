@@ -5,14 +5,14 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Railway uses "railwaypostgresql://" internally — normalize to standard "postgresql://"
+function normalizeDbUrl(url: string | undefined): string {
+  if (!url) return "postgresql://build:build@localhost/build";
+  return url.replace(/^railwaypostgresql:\/\//, "postgresql://");
+}
+
 function createClient() {
-  // During build DATABASE_URL may be undefined — return a placeholder client
-  // that will throw only when actually queried (not at import/construct time).
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    // No-op client for build-time static analysis
-    return new PrismaClient({ adapter: new PrismaPg({ connectionString: "postgresql://build:build@localhost/build" } as any) });
-  }
+  const url = normalizeDbUrl(process.env.DATABASE_URL);
   const adapter = new PrismaPg({ connectionString: url });
   return new PrismaClient({ adapter });
 }
