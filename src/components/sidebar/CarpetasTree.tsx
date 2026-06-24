@@ -10,7 +10,7 @@ interface Carpeta {
   id: string;
   nombre: string;
   children: Carpeta[];
-  _count: { documentos: number };
+  _count: { documentoUsuarios: number };
 }
 
 export function CarpetasTree() {
@@ -176,8 +176,8 @@ export function CarpetasTree() {
           )}
 
           {/* Doc count */}
-          {c._count?.documentos > 0 && !isEditing && (
-            <span className="text-[9px] opacity-40 shrink-0 ml-1">{c._count.documentos}</span>
+          {c._count?.documentoUsuarios > 0 && !isEditing && (
+            <span className="text-[9px] opacity-40 shrink-0 ml-1">{c._count.documentoUsuarios}</span>
           )}
 
           {/* Action buttons (visible on hover) */}

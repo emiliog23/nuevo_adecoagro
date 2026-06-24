@@ -172,7 +172,7 @@ export default function DocumentosPage() {
                   className={`border-b border-[#e8e9eb] transition-colors cursor-context-menu ${doc.archivado && !soloArchivados ? "opacity-50" : ""} ${doc.importante ? "border-l-2 border-l-amber-500" : ""}`}
                   style={{
                     backgroundColor: !doc.lecturas?.some((l: any) => l.userId === myId)
-                      ? "#f5f8f5"   // very light green tint = unread
+                      ? "#f4f4f5"   // light gray = unread
                       : undefined,
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f1f3")}

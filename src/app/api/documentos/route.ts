@@ -48,7 +48,12 @@ export async function GET(req: NextRequest) {
         ...(tipo ? { tipo } : {}),
         ...(maquinaId ? { maquinaId } : {}),
         ...(searchIds !== null ? { id: { in: searchIds } } : search ? { titulo: { contains: search, mode: "insensitive" } } : {}),
-        ...(carpetaId === "sin-carpeta" ? { carpetaId: null } : carpetaId ? { carpetaId } : {}),
+        // carpetaId filter goes through per-user DocumentoUsuario
+        ...(carpetaId === "sin-carpeta"
+          ? { NOT: { documentoUsuarios: { some: { userId, carpetaId: { not: null } } } } }
+          : carpetaId
+          ? { documentoUsuarios: { some: { userId, carpetaId } } }
+          : {}),
         // Per-user archivado filter via DocumentoUsuario
         ...(soloArchivados
           ? { documentoUsuarios: { some: { userId, archivado: true } } }
