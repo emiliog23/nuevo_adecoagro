@@ -5,7 +5,6 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Railway uses "railwaypostgresql://" internally — normalize to standard "postgresql://"
 function normalizeDbUrl(url: string | undefined): string {
   if (!url) return "postgresql://build:build@localhost/build";
   return url.replace(/^railwaypostgresql:\/\//, "postgresql://");
@@ -17,6 +16,6 @@ function createClient() {
   return new PrismaClient({ adapter });
 }
 
+// Always use singleton to avoid connection pool exhaustion
 export const prisma = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+globalForPrisma.prisma = prisma;

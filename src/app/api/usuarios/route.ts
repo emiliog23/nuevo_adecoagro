@@ -22,12 +22,19 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+
+  if (!body.name?.trim()) return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
+  if (!body.email?.trim()) return NextResponse.json({ error: "Usuario requerido" }, { status: 400 });
+  if (!body.password || body.password.length < 6) return NextResponse.json({ error: "Contraseña mínimo 6 caracteres" }, { status: 400 });
+  const validRoles = ["ADMIN", "SUPERVISOR", "TECNICO", "VIEWER"];
+  if (body.role && !validRoles.includes(body.role)) return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
+
   const hashedPassword = await bcrypt.hash(body.password, 10);
 
   const user = await prisma.user.create({
     data: {
-      name: body.name,
-      email: body.email,
+      name: body.name.trim(),
+      email: body.email.trim().toLowerCase(),
       password: hashedPassword,
       role: body.role ?? "TECNICO",
       color: body.color ?? "AZUL",

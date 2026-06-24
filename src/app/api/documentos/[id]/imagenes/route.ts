@@ -48,7 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!file.type.startsWith("image/")) continue;
     if (file.size > 10 * 1024 * 1024) continue; // 10 MB limit
 
-    const ext = file.name.split(".").pop() ?? "jpg";
+    const rawExt = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+    const ext = ["jpg", "jpeg", "png", "gif", "webp", "avif"].includes(rawExt) ? rawExt : "jpg";
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const filePath = path.join(uploadDir, safeName);
 
