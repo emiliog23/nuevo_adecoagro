@@ -17,6 +17,7 @@ interface NavItem { href: string; label: string; icon: React.ReactNode; }
 const TIPOS_DOC = [
   { tipo: "",                      label: "Todos" },
   { tipo: "REPORTE_INTERVENCION",  label: "Reportes de Intervención" },
+  { tipo: "MEJORA_MODIFICACION",   label: "Mejoras y Modificaciones" },
   { tipo: "ORDEN_TRABAJO",         label: "Órdenes de Trabajo" },
   { tipo: "CIERRE_TURNO",          label: "Cierres de Turno" },
   { tipo: "DESCARGA_REPUESTOS",    label: "Descargas de Repuestos" },

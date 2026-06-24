@@ -31,6 +31,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         include: { operador: { select: { id: true, name: true } } },
       },
       descargaRepuestos: { include: { documentoOrigen: { select: { id: true, titulo: true } } } },
+      mejoraModificacion: true,
       descargasOriginadas: { include: { documento: { select: { id: true, titulo: true } } } },
       carpeta: { select: { id: true, nombre: true } },
     },

@@ -8,9 +8,10 @@ import { format } from "date-fns";
 
 const TIPOS = [
   { value: "REPORTE_INTERVENCION", label: "Reporte de Intervención" },
-  { value: "ORDEN_TRABAJO", label: "Orden de Trabajo" },
-  { value: "CIERRE_TURNO", label: "Cierre de Turno" },
-  { value: "DESCARGA_REPUESTOS", label: "Descarga de Repuestos" },
+  { value: "MEJORA_MODIFICACION",  label: "Mejora/Modificación" },
+  { value: "ORDEN_TRABAJO",        label: "Orden de Trabajo" },
+  { value: "CIERRE_TURNO",         label: "Cierre de Turno" },
+  { value: "DESCARGA_REPUESTOS",   label: "Descarga de Repuestos" },
 ];
 
 const ic = "w-full px-3 py-1.5 border border-[#d4d6d8] text-sm text-[#1d2023] focus:outline-none focus:border-[#1C6B30] bg-white";
@@ -51,6 +52,7 @@ export default function NuevoDocumentoPage() {
     setTipo(t);
     const now = format(new Date(), "yyyy-MM-dd'T'HH:mm");
     if (t === "REPORTE_INTERVENCION") setDatos({ fechaInicio: now, tipoFalla: "", descripcionFalla: "", trabajoRealizado: "", observaciones: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
+    else if (t === "MEJORA_MODIFICACION") setDatos({ fechaInicio: now, descripcion: "", trabajoRealizado: "", observaciones: "", tecnicosIds: session?.user?.id ? [session.user.id] : [] });
     else if (t === "ORDEN_TRABAJO") setDatos({ descripcion: "", prioridad: "MEDIA", estado: "PENDIENTE", observaciones: "" });
     else if (t === "CIERRE_TURNO") setDatos({ fecha: now, novedades: "", trabajosRealizados: "", pendientes: "" });
     else if (t === "DESCARGA_REPUESTOS") setDatos({ fecha: now, items: [REPUESTO_VACIO()], observaciones: "" });
@@ -85,6 +87,9 @@ export default function NuevoDocumentoPage() {
       const maq = maquinas.find((m) => m.id === maquinaId);
       const fecha = format(new Date(datos.fecha ?? new Date()), "dd/MM/yyyy HH:mm");
       return maq ? `Descarga Repuestos – ${maq.nombre} – ${fecha}` : `Descarga Repuestos – ${fecha}`;
+    }
+    if (tipo === "MEJORA_MODIFICACION") {
+      return titulo ? `Mejora/Modificación – ${titulo}` : `Mejora/Modificación – ${format(new Date(), "dd/MM/yyyy HH:mm")}`;
     }
     return titulo;
   }
@@ -176,6 +181,7 @@ export default function NuevoDocumentoPage() {
                     {TIPOS.find(t => t.value === tipo)?.label}
                   </p>
                   {tipo === "REPORTE_INTERVENCION" && <ReporteF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
+                  {tipo === "MEJORA_MODIFICACION" && <MejoraF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "ORDEN_TRABAJO" && <OrdenF datos={datos} upd={upd} tecnicos={tecnicos} />}
                   {tipo === "CIERRE_TURNO" && <CierreF datos={datos} upd={upd} setDatos={setDatos} />}
                   {tipo === "DESCARGA_REPUESTOS" && <DescargaF datos={datos} upd={upd} setDatos={setDatos} />}
@@ -436,5 +442,48 @@ function DescargaF({ datos, upd, setDatos }: any) {
       <button type="button" onClick={addItem} className="text-xs text-[#1C6B30] hover:underline">+ Agregar repuesto</button>
     </div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
+  </>;
+}
+
+function MejoraF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, sessionId }: any) {
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const previews = imageFiles.map((f: File) => URL.createObjectURL(f));
+  function handleImgFiles(files: FileList | null) {
+    if (!files) return;
+    setImageFiles((prev: File[]) => [...prev, ...Array.from(files).filter(f => f.type.startsWith("image/"))]);
+  }
+  return <>
+    {tecnicos?.length > 0 && sessionId && (
+      <div>
+        <Lbl>Técnicos</Lbl>
+        <TecnicosInput tecnicos={tecnicos} value={datos.tecnicosIds?.length ? datos.tecnicosIds : [sessionId]} creatorId={sessionId} onChange={(ids) => upd("tecnicosIds", ids)} />
+      </div>
+    )}
+    <div className="grid grid-cols-2 gap-3">
+      <div><Lbl req>Inicio</Lbl><input type="datetime-local" value={datos.fechaInicio ?? ""} onChange={(e) => upd("fechaInicio", e.target.value)} className={ic} required /></div>
+      <div><Lbl>Fin</Lbl><input type="datetime-local" value={datos.fechaFin ?? ""} onChange={(e) => upd("fechaFin", e.target.value)} className={ic} /></div>
+    </div>
+    <div><Lbl req>Descripción</Lbl><textarea value={datos.descripcion ?? ""} onChange={(e) => upd("descripcion", e.target.value)} className={ta} required /></div>
+    <div><Lbl req>Trabajo Realizado</Lbl><textarea value={datos.trabajoRealizado ?? ""} onChange={(e) => upd("trabajoRealizado", e.target.value)} className={ta} required /></div>
+    <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
+    <div className="border-t border-[#e8e9eb] pt-3 mt-1">
+      <Lbl>Imágenes</Lbl>
+      <div className="mt-1 border border-dashed border-[#d4d6d8] p-3 hover:border-[#1C6B30] transition-colors cursor-pointer" onClick={() => imgInputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleImgFiles(e.dataTransfer.files); }}>
+        {previews.length === 0 ? <p className="text-xs text-[#9ea3aa] text-center py-2">Arrastrá imágenes o hacé click · PNG, JPG, WEBP</p> : (
+          <div className="flex flex-wrap gap-2">
+            {previews.map((src: string, idx: number) => (
+              <div key={idx} className="relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="w-16 h-16 object-cover border border-[#d4d6d8]" />
+                <button type="button" onClick={(e) => { e.stopPropagation(); setImageFiles((p: File[]) => p.filter((_: File, i: number) => i !== idx)); }} className="absolute top-0 right-0 hidden group-hover:flex w-4 h-4 bg-black/60 text-white text-[9px] items-center justify-center">✕</button>
+              </div>
+            ))}
+            <div className="w-16 h-16 border border-dashed border-[#d4d6d8] flex items-center justify-center text-[#9ea3aa] text-lg">+</div>
+          </div>
+        )}
+      </div>
+      <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImgFiles(e.target.files)} />
+    </div>
+    <RepuestosInline datos={datos} setDatos={setDatos} />
   </>;
 }

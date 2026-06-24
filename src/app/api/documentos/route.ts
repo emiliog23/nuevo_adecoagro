@@ -8,6 +8,7 @@ const TIPO_LABELS: Record<string, string> = {
   ORDEN_TRABAJO: "orden de trabajo",
   CIERRE_TURNO: "cierre de turno",
   DESCARGA_REPUESTOS: "descarga de repuestos",
+  MEJORA_MODIFICACION: "mejora/modificación",
 };
 
 export async function GET(req: NextRequest) {
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest) {
         descargaRepuestos: { select: { fecha: true, items: true } },
         lecturas: { select: { userId: true, user: { select: { name: true } } } },
         carpeta: { select: { id: true, nombre: true } },
+        mejoraModificacion: { select: { fechaInicio: true } },
       },
     }),
     prisma.user.count({ where: { activo: true } }),
@@ -124,6 +126,21 @@ export async function POST(req: NextRequest) {
     });
     if (datos.repuestos?.length) {
       await crearDescargaLinkada(datos, documento.id, maquinaId, session.user.id as string, titulo, "cierre");
+    }
+  } else if (tipo === "MEJORA_MODIFICACION" && datos) {
+    await prisma.mejoraModificacion.create({
+      data: {
+        documentoId: documento.id,
+        fechaInicio: new Date(datos.fechaInicio),
+        fechaFin: datos.fechaFin ? new Date(datos.fechaFin) : null,
+        descripcion: datos.descripcion,
+        trabajoRealizado: datos.trabajoRealizado,
+        observaciones: datos.observaciones || null,
+        tecnicosIds: JSON.stringify((datos.tecnicosIds ?? []).filter((id: string) => id !== session.user.id)),
+      },
+    });
+    if (datos.repuestos?.length) {
+      await crearDescargaLinkada(datos, documento.id, maquinaId, session.user.id as string, titulo, "reporte");
     }
   } else if (tipo === "DESCARGA_REPUESTOS" && datos) {
     await prisma.descargaRepuestos.create({

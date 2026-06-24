@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 
 const TIPO_LABELS_MAP: Record<string, string> = {
   REPORTE_INTERVENCION: "Reportes de Intervención",
+  MEJORA_MODIFICACION:  "Mejoras y Modificaciones",
   ORDEN_TRABAJO: "Órdenes de Trabajo",
   CIERRE_TURNO: "Cierres de Turno",
   DESCARGA_REPUESTOS: "Descargas de Repuestos",
@@ -258,6 +259,10 @@ const NUEVO_TIPOS = [
   {
     value: "REPORTE_INTERVENCION", label: "Reporte de Intervención", desc: "Falla, corrección y diagnóstico",
     icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>,
+  },
+  {
+    value: "MEJORA_MODIFICACION", label: "Mejora/Modificación", desc: "Modificación o mejora de equipo",
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
   },
   {
     value: "ORDEN_TRABAJO", label: "Orden de Trabajo", desc: "Tarea planificada o correctiva",

@@ -26,6 +26,7 @@ export const TIPO_DOC_LABELS = {
   ORDEN_TRABAJO: "Orden de Trabajo",
   CIERRE_TURNO: "Cierre de Turno",
   DESCARGA_REPUESTOS: "Descarga de Repuestos",
+  MEJORA_MODIFICACION: "Mejora/Modificación",
 } as const;
 
 export const PRIORIDAD_LABELS = {

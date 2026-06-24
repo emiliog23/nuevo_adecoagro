@@ -87,6 +87,7 @@ export default function DocumentoPage() {
           {doc.tipo === "ORDEN_TRABAJO" && doc.ordenTrabajo && <OrdenView ot={doc.ordenTrabajo} docId={id} />}
           {doc.tipo === "CIERRE_TURNO" && doc.cierreTurno && <CierreView c={doc.cierreTurno} />}
           {doc.tipo === "DESCARGA_REPUESTOS" && doc.descargaRepuestos && <DescargaView d={doc.descargaRepuestos} />}
+          {doc.tipo === "MEJORA_MODIFICACION" && doc.mejoraModificacion && <MejoraView m={doc.mejoraModificacion} />}
           {/* Descargas de repuestos generadas desde este documento */}
           {doc.descargasOriginadas?.length > 0 && (
             <div className="bg-white border border-[#d4d6d8] mt-4">
@@ -324,5 +325,24 @@ function DescargaView({ d }: { d: any }) {
         </div>
       )}
     </div>
+  );
+}
+
+function MejoraView({ m }: { m: any }) {
+  const adicionales: string[] = (() => { try { return JSON.parse(m.tecnicosIds || "[]"); } catch { return []; } })();
+  return (
+    <Section title="Mejora/Modificación">
+      <Field label="Técnicos" value={adicionales.length > 0 ? <>{m.tecnico?.name ?? "—"} + <TecnicosAdicionales ids={adicionales} /></> : (m.tecnico?.name ?? "—")} />
+      <Field label="Inicio" value={format(new Date(m.fechaInicio), "d MMM yyyy HH:mm", { locale: es })} />
+      {m.fechaFin && (
+        <>
+          <Field label="Fin" value={format(new Date(m.fechaFin), "d MMM yyyy HH:mm", { locale: es })} />
+          <Field label="Duración" value={<strong>{duracion(m.fechaInicio, m.fechaFin)}</strong>} />
+        </>
+      )}
+      <Field label="Descripción" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.descripcion}</pre>} />
+      <Field label="Trabajo Realizado" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.trabajoRealizado}</pre>} />
+      {m.observaciones && <Field label="Observaciones" value={<pre className="whitespace-pre-wrap font-sans text-sm">{m.observaciones}</pre>} />}
+    </Section>
   );
 }

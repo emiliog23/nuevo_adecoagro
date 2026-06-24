@@ -118,6 +118,7 @@ model Documento {
   cierreTurno         CierreTurno?
   descargaRepuestos    DescargaRepuestos?
   descargasOriginadas  DescargaRepuestos[]  @relation("DescargaOrigen")
+  mejoraModificacion   MejoraModificacion?
   lecturas             LecturaDocumento[]
   comentarios          Comentario[]
   imagenes             ImagenDocumento[]
@@ -207,6 +208,22 @@ model Carpeta {
   documentos Documento[]
 
   @@map("carpetas")
+}
+
+model MejoraModificacion {
+  id               String    @id @default(cuid())
+  documentoId      String    @unique
+  fechaInicio      DateTime
+  fechaFin         DateTime?
+  descripcion      String
+  trabajoRealizado String
+  observaciones    String?
+  tecnicosIds      String    @default("[]")
+  createdAt        DateTime  @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@map("mejoras_modificaciones")
 }
 
 model LecturaDocumento {
