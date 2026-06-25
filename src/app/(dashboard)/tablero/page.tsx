@@ -43,6 +43,7 @@ interface OTCard {
   estado: EstadoOT;
   fechaVencimiento?: string | null;
   tecnico?: string | null;
+  tecnicos?: string | null;   // comma-separated all technicians
   maquina?: string | null;
   sector?: string | null;
   linea?: string | null;
@@ -75,6 +76,10 @@ export default function TableroPage() {
       estado: d.ordenTrabajo?.estado ?? "PENDIENTE",
       fechaVencimiento: d.ordenTrabajo?.fechaVencimiento ?? null,
       tecnico: d.ordenTrabajo?.tecnico?.name ?? null,
+      tecnicos: (() => {
+        const names = [d.ordenTrabajo?.tecnico?.name, ...(d.ordenTrabajo?.tecnicosResueltos ?? []).map((t: any) => t.name)].filter(Boolean);
+        return names.length ? names.join(", ") : null;
+      })(),
       maquina: d.maquina?.nombre ?? null,
       sector: d.maquina?.linea?.subsector?.sector?.nombre ?? null,
       linea: d.maquina?.linea?.nombre ?? null,
@@ -294,8 +299,8 @@ function CardView({ card, isDragging, saving }: { card: OTCard; isDragging: bool
         {card.maquina && (
           <p className="text-[10px] text-[#9ea3aa] truncate">{card.sector && `${card.sector} › `}{card.maquina}</p>
         )}
-        {card.tecnico && (
-          <p className="text-[10px] text-[#9ea3aa]">{card.tecnico}</p>
+        {card.tecnicos && (
+          <p className="text-[10px] text-[#9ea3aa]">{card.tecnicos}</p>
         )}
         {card.fechaVencimiento && (
           <p className={`text-[10px] font-medium ${isOverdue ? "text-red-500" : "text-[#9ea3aa]"}`}>

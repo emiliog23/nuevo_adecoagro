@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
             linea: { include: { subsector: { include: { sector: { select: { id: true, nombre: true } } } } } },
           },
         },
-        ordenTrabajo: { select: { estado: true, prioridad: true, fechaVencimiento: true, descripcion: true, tecnico: { select: { name: true } } } },
+        ordenTrabajo: { select: { estado: true, prioridad: true, fechaVencimiento: true, descripcion: true, tecnicosIds: true, tecnico: { select: { id: true, name: true } } } },
         reporteIntervencion: { select: { fechaInicio: true, tipoFalla: true } },
         cierreTurno: { select: { turno: true, fecha: true } },
         descargaRepuestos: { select: { fecha: true, items: true } },
@@ -95,15 +95,32 @@ export async function GET(req: NextRequest) {
     prisma.user.count({ where: { activo: true } }),
   ]);
 
+  // Resolve tecnicosIds for OT items (for tablero)
+  const otWithTecnicos = documentos.filter(d => d.ordenTrabajo?.tecnicosIds);
+  const allTecIds = new Set<string>();
+  otWithTecnicos.forEach(d => {
+    try { JSON.parse((d.ordenTrabajo?.tecnicosIds as string) || "[]").forEach((id: string) => allTecIds.add(id)); } catch { /* */ }
+  });
+  const tecUsers = allTecIds.size > 0
+    ? await prisma.user.findMany({ where: { id: { in: [...allTecIds] } }, select: { id: true, name: true, color: true } })
+    : [];
+  const tecMap = Object.fromEntries(tecUsers.map(t => [t.id, t]));
+
   // Flatten per-user state into each document
   const docs = documentos.map((d) => {
     const userState = d.documentoUsuarios?.[0];
+    const ot = d.ordenTrabajo;
+    const tecnicosResueltos = (() => {
+      try { return (JSON.parse((ot?.tecnicosIds as string) || "[]") as string[]).map((id: string) => tecMap[id]).filter(Boolean); }
+      catch { return []; }
+    })();
     return {
       ...d,
       archivado: userState?.archivado ?? false,
       carpetaId: userState?.carpetaId ?? null,
       carpeta: userState?.carpeta ?? null,
-      documentoUsuarios: undefined, // remove raw array from response
+      documentoUsuarios: undefined,
+      ordenTrabajo: ot ? { ...ot, tecnicosResueltos } : d.ordenTrabajo,
     };
   });
 

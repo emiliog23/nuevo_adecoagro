@@ -24,12 +24,15 @@ export default function EditarDocumentoPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [tecnicos, setTecnicos] = useState<any[]>([]);
+  const [maquinas, setMaquinas] = useState<any[]>([]);
+  const [maquinaId, setMaquinaId] = useState<string>("");
 
   useEffect(() => {
     fetch(`/api/documentos/${id}`).then((r) => r.json()).then((d) => {
       if (d.creadoPorId !== session?.user?.id) { router.push(`/documentos/${id}`); return; }
       setDoc(d);
       setTitulo(d.titulo);
+      setMaquinaId(d.maquinaId ?? "");
       if (d.tipo === "REPORTE_INTERVENCION" && d.reporteIntervencion) {
         const r = d.reporteIntervencion;
         setDatos({ fechaInicio: format(new Date(r.fechaInicio), "yyyy-MM-dd'T'HH:mm"), fechaFin: r.fechaFin ? format(new Date(r.fechaFin), "yyyy-MM-dd'T'HH:mm") : "", tipoFalla: r.tipoFalla, descripcionFalla: r.descripcionFalla, trabajoRealizado: r.trabajoRealizado, observaciones: r.observaciones ?? "", tecnicosIds: (() => { try { return JSON.parse(r.tecnicosIds || "[]"); } catch { return []; } })() });
@@ -46,6 +49,7 @@ export default function EditarDocumentoPage() {
       }
     });
     fetch("/api/usuarios").then((r) => r.json()).then(setTecnicos).catch(() => {});
+    fetch("/api/maquinas").then((r) => r.json()).then(setMaquinas).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, session?.user?.id]);
 
@@ -57,7 +61,7 @@ export default function EditarDocumentoPage() {
     const res = await fetch(`/api/documentos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titulo, tipo: doc.tipo, datos, edicion: true, resumen: `Editó el documento` }),
+      body: JSON.stringify({ titulo, tipo: doc.tipo, datos, maquinaId: maquinaId || null, edicion: true, resumen: `Editó el documento` }),
     });
     if (res.ok) { router.push(`/documentos/${id}`); }
     else { const d = await res.json(); setError(d.error ?? "Error al guardar"); setSaving(false); }
@@ -83,9 +87,24 @@ export default function EditarDocumentoPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
 
             {!["CIERRE_TURNO"].includes(doc.tipo) && (
-              <div className="bg-white border border-[#d4d6d8] p-4">
-                <Lbl req>Título</Lbl>
-                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className={ic} required />
+              <div className="bg-white border border-[#d4d6d8] p-4 space-y-3">
+                <div>
+                  <Lbl req>Título</Lbl>
+                  <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className={ic} required />
+                </div>
+                {!["CIERRE_TURNO", "DESCARGA_REPUESTOS"].includes(doc.tipo) && (
+                  <div>
+                    <Lbl>Máquina</Lbl>
+                    <select value={maquinaId} onChange={(e) => setMaquinaId(e.target.value)} className={se}>
+                      <option value="">Sin máquina asignada</option>
+                      {maquinas.map((m: any) => (
+                        <option key={m.id} value={m.id}>
+                          {m.linea?.subsector?.sector?.nombre} › {m.linea?.subsector?.nombre} › {m.linea?.nombre} › {m.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
 
