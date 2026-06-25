@@ -110,7 +110,7 @@ export function TecnicosInput({ tecnicos, value, creatorId, onChange }: Props) {
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKey}
-          placeholder={selected.length ? "" : "Buscar por nombre o color (ej: verde)..."}
+          placeholder={selected.length ? "" : "Buscar por nombre o turno (ej: verde)..."}
           className="flex-1 min-w-[140px] outline-none text-sm text-[#1d2023] bg-transparent py-0.5"
         />
       </div>
