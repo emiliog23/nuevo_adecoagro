@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         include: { tecnico: { select: { id: true, name: true, color: true } } },
       },
       ordenTrabajo: {
-        include: { tecnico: { select: { id: true, name: true } } },
+        include: { tecnico: { select: { id: true, name: true, color: true } } },
       },
       cierreTurno: {
         include: { operador: { select: { id: true, name: true } } },
@@ -53,9 +53,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     } catch { return []; }
   }
 
-  const [tecnicosReporte, tecnicosMejora] = await Promise.all([
+  const [tecnicosReporte, tecnicosMejora, tecnicosOT] = await Promise.all([
     doc.reporteIntervencion ? resolveTecnicos(doc.reporteIntervencion.tecnicosIds) : [],
     doc.mejoraModificacion  ? resolveTecnicos(doc.mejoraModificacion.tecnicosIds)  : [],
+    doc.ordenTrabajo        ? resolveTecnicos(doc.ordenTrabajo.tecnicosIds)        : [],
   ]);
 
   return NextResponse.json({
@@ -65,6 +66,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       : null,
     mejoraModificacion: doc.mejoraModificacion
       ? { ...doc.mejoraModificacion, tecnicosResueltos: tecnicosMejora }
+      : null,
+    ordenTrabajo: doc.ordenTrabajo
+      ? { ...doc.ordenTrabajo, tecnicosResueltos: tecnicosOT }
       : null,
   });
 }

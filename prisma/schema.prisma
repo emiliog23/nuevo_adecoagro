@@ -160,6 +160,7 @@ model OrdenTrabajo {
   estado           String    @default("PENDIENTE")
   fechaVencimiento DateTime?
   tecnicoId        String?
+  tecnicosIds      String    @default("[]")
   observaciones    String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

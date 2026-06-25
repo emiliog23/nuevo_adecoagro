@@ -154,6 +154,7 @@ export async function POST(req: NextRequest) {
         estado: datos.estado ?? "PENDIENTE",
         fechaVencimiento: datos.fechaVencimiento ? new Date(datos.fechaVencimiento) : null,
         tecnicoId: datos.tecnicoId || null,
+        tecnicosIds: JSON.stringify(datos.tecnicosIds ?? []),
         observaciones: datos.observaciones || null,
       },
     });

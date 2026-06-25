@@ -239,7 +239,9 @@ function OrdenView({ ot, docId }: { ot: any; docId: string }) {
       <Section title="Orden de Trabajo">
         <Field label="Prioridad" value={PRIORIDAD_LABELS[ot.prioridad as keyof typeof PRIORIDAD_LABELS]} />
         <Field label="Estado" value={<span className="font-medium">{ESTADO_OT_LABELS[estado as keyof typeof ESTADO_OT_LABELS]}</span>} />
-        {ot.tecnico && <Field label="Técnico" value={ot.tecnico.name} />}
+        {(ot.tecnico || ot.tecnicosResueltos?.length > 0) && (
+          <Field label="Técnicos" value={<TecnicosField creador={ot.tecnico?.name} resueltos={ot.tecnicosResueltos} />} />
+        )}
         {ot.fechaVencimiento && <Field label="Vencimiento" value={format(new Date(ot.fechaVencimiento), "d MMM yyyy", { locale: es })} />}
         <Field label="Descripción" value={<pre className="whitespace-pre-wrap font-sans text-sm">{ot.descripcion}</pre>} />
         {ot.observaciones && <Field label="Observaciones" value={<pre className="whitespace-pre-wrap font-sans text-sm">{ot.observaciones}</pre>} />}

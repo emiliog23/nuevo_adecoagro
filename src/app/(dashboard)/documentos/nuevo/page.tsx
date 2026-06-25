@@ -186,7 +186,7 @@ export default function NuevoDocumentoPage() {
                   {tipo === "REPORTE_INTERVENCION" && <ReporteF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "MEJORA_MODIFICACION" && <MejoraF datos={datos} upd={upd} setDatos={setDatos} imageFiles={imageFiles} setImageFiles={setImageFiles} tecnicos={tecnicos} sessionId={session?.user?.id} />}
                   {tipo === "GENERICO" && <GenericoF datos={datos} upd={upd} tecnicos={tecnicos} sessionId={session?.user?.id} />}
-                  {tipo === "ORDEN_TRABAJO" && <OrdenF datos={datos} upd={upd} tecnicos={tecnicos} />}
+                  {tipo === "ORDEN_TRABAJO" && <OrdenF datos={datos} upd={upd} tecnicos={tecnicos} imageFiles={imageFiles} setImageFiles={setImageFiles} sessionId={session?.user?.id} />}
                   {tipo === "CIERRE_TURNO" && <CierreF datos={datos} upd={upd} setDatos={setDatos} />}
                   {tipo === "DESCARGA_REPUESTOS" && <DescargaF datos={datos} upd={upd} setDatos={setDatos} />}
                 </div>
@@ -315,8 +315,21 @@ function ReporteF({ datos, upd, setDatos, imageFiles, setImageFiles, tecnicos, s
   </>;
 }
 
-function OrdenF({ datos, upd, tecnicos }: any) {
+function OrdenF({ datos, upd, tecnicos, imageFiles, setImageFiles, sessionId }: any) {
   return <>
+    {/* Técnicos participantes */}
+    {tecnicos?.length > 0 && (
+      <div>
+        <Lbl>Técnicos</Lbl>
+        <TecnicosInput
+          tecnicos={tecnicos}
+          value={datos.tecnicosIds?.length ? datos.tecnicosIds : []}
+          creatorId={sessionId ?? ""}
+          onChange={(ids) => upd("tecnicosIds", ids)}
+        />
+      </div>
+    )}
+
     <div><Lbl req>Descripción</Lbl><textarea value={datos.descripcion ?? ""} onChange={(e) => upd("descripcion", e.target.value)} className={ta} required /></div>
     <div className="grid grid-cols-2 gap-3">
       <div><Lbl>Prioridad</Lbl>
@@ -332,7 +345,7 @@ function OrdenF({ datos, upd, tecnicos }: any) {
     </div>
     <div className="grid grid-cols-2 gap-3">
       <div><Lbl>Vencimiento</Lbl><input type="date" value={datos.fechaVencimiento ?? ""} onChange={(e) => upd("fechaVencimiento", e.target.value)} className={ic} /></div>
-      <div><Lbl>Técnico</Lbl>
+      <div><Lbl>Técnico responsable</Lbl>
         <select value={datos.tecnicoId ?? ""} onChange={(e) => upd("tecnicoId", e.target.value)} className={se}>
           <option value="">Sin asignar</option>
           {tecnicos.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -340,6 +353,14 @@ function OrdenF({ datos, upd, tecnicos }: any) {
       </div>
     </div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
+
+    {/* Imágenes */}
+    {imageFiles !== undefined && (
+      <div className="border-t border-[#e8e9eb] pt-3 mt-1">
+        <Lbl>Imágenes</Lbl>
+        <ImageDropzone files={imageFiles} onChange={setImageFiles} />
+      </div>
+    )}
   </>;
 }
 
