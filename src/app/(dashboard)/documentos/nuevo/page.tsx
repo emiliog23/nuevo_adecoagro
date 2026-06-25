@@ -323,8 +323,8 @@ function OrdenF({ datos, upd, tecnicos, imageFiles, setImageFiles, sessionId }: 
         <Lbl>Técnicos</Lbl>
         <TecnicosInput
           tecnicos={tecnicos}
-          value={datos.tecnicosIds?.length ? datos.tecnicosIds : []}
-          creatorId={sessionId ?? ""}
+          value={datos.tecnicosIds ?? []}
+          creatorId=""
           onChange={(ids) => upd("tecnicosIds", ids)}
         />
       </div>
