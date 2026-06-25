@@ -40,7 +40,7 @@ export default function EditarDocumentoPage() {
         setDatos({ contenido: d.documentoGenerico.contenido, tecnicosIds: (() => { try { return JSON.parse(d.documentoGenerico.tecnicosIds || "[]"); } catch { return []; } })() });
       } else if (d.tipo === "ORDEN_TRABAJO" && d.ordenTrabajo) {
         const ot = d.ordenTrabajo;
-        setDatos({ descripcion: ot.descripcion, prioridad: ot.prioridad, estado: ot.estado, observaciones: ot.observaciones ?? "", fechaVencimiento: ot.fechaVencimiento ? format(new Date(ot.fechaVencimiento), "yyyy-MM-dd") : "", tecnicoId: ot.tecnico?.id ?? "" });
+        setDatos({ descripcion: ot.descripcion, prioridad: ot.prioridad, estado: ot.estado, observaciones: ot.observaciones ?? "", fechaVencimiento: ot.fechaVencimiento ? format(new Date(ot.fechaVencimiento), "yyyy-MM-dd") : "", tecnicoId: ot.tecnico?.id ?? "", tecnicosIds: (() => { try { return JSON.parse(ot.tecnicosIds || "[]"); } catch { return []; } })() });
       } else if (d.tipo === "CIERRE_TURNO" && d.cierreTurno) {
         setDatos({ novedades: d.cierreTurno.novedades, trabajosRealizados: d.cierreTurno.trabajosRealizados ?? "", pendientes: d.cierreTurno.pendientes ?? "" });
       }
@@ -139,6 +139,17 @@ export default function EditarDocumentoPage() {
 
               {/* OT */}
               {doc.tipo === "ORDEN_TRABAJO" && <>
+                {tecnicos.length > 0 && (
+                  <div>
+                    <Lbl>Técnicos</Lbl>
+                    <TecnicosInput
+                      tecnicos={tecnicos}
+                      value={datos.tecnicosIds ?? []}
+                      creatorId=""
+                      onChange={(ids) => upd("tecnicosIds", ids)}
+                    />
+                  </div>
+                )}
                 <div><Lbl req>Descripción</Lbl><textarea value={datos.descripcion ?? ""} onChange={(e) => upd("descripcion", e.target.value)} className={ta} required /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Lbl>Prioridad</Lbl>
