@@ -95,8 +95,8 @@ export default function DocumentoPage() {
           {doc.tipo === "ORDEN_TRABAJO" && doc.ordenTrabajo && <OrdenView ot={doc.ordenTrabajo} docId={id} />}
           {doc.tipo === "CIERRE_TURNO" && doc.cierreTurno && <CierreView c={doc.cierreTurno} />}
           {doc.tipo === "DESCARGA_REPUESTOS" && doc.descargaRepuestos && <DescargaView d={doc.descargaRepuestos} />}
-          {doc.tipo === "MEJORA_MODIFICACION" && doc.mejoraModificacion && <MejoraView m={doc.mejoraModificacion} />}
-          {doc.tipo === "GENERICO" && doc.documentoGenerico && <GenericoView g={doc.documentoGenerico} />}
+          {doc.tipo === "MEJORA_MODIFICACION" && doc.mejoraModificacion && <MejoraView m={doc.mejoraModificacion} creador={doc.creadoPor?.name} />}
+          {doc.tipo === "GENERICO" && doc.documentoGenerico && <GenericoView g={doc.documentoGenerico} creador={doc.creadoPor?.name} />}
           {/* Descargas de repuestos generadas desde este documento */}
           {doc.descargasOriginadas?.length > 0 && (
             <div className="bg-white border border-[#d4d6d8] mt-4">
@@ -196,21 +196,15 @@ function duracion(inicio: string, fin: string): string {
   return `${m}m`;
 }
 
+function TecnicosField({ creador, resueltos }: { creador?: string; resueltos?: { name: string }[] }) {
+  const todos = [creador, ...(resueltos ?? []).map(t => t.name)].filter(Boolean);
+  return <span>{todos.length ? todos.join(", ") : "—"}</span>;
+}
+
 function ReporteView({ r }: { r: any }) {
-  const adicionales: string[] = (() => { try { return JSON.parse(r.tecnicosIds || "[]"); } catch { return []; } })();
-
-  // Build technician display
-  const tecnicosList = [r.tecnico?.name].filter(Boolean);
-  // Additional technician names come via the doc creadoPor — we just show IDs here
-  // They'll be resolved client-side if needed; for now show count
-
   return (
     <Section title="Reporte de Intervención">
-      <Field label="Técnicos" value={
-        adicionales.length > 0
-          ? <>{r.tecnico?.name} + <TecnicosAdicionales ids={adicionales} /></>
-          : r.tecnico?.name
-      } />
+      <Field label="Técnicos" value={<TecnicosField creador={r.tecnico?.name} resueltos={r.tecnicosResueltos} />} />
       <Field label="Inicio" value={format(new Date(r.fechaInicio), "d MMM yyyy HH:mm", { locale: es })} />
       {r.fechaFin && (
         <>
@@ -226,20 +220,6 @@ function ReporteView({ r }: { r: any }) {
   );
 }
 
-function TecnicosAdicionales({ ids }: { ids: string[] }) {
-  const [nombres, setNombres] = useState<string[]>([]);
-  useEffect(() => {
-    if (!ids.length) return;
-    fetch("/api/usuarios")
-      .then(r => r.json())
-      .then((users: any[]) => {
-        setNombres(users.filter(u => ids.includes(u.id)).map(u => u.name));
-      })
-      .catch(() => {});
-  }, [ids]);
-  if (!nombres.length) return <span className="text-[#9ea3aa]">Cargando...</span>;
-  return <span>{nombres.join(", ")}</span>;
-}
 
 function OrdenView({ ot, docId }: { ot: any; docId: string }) {
   const { data: session } = useSession();
@@ -339,11 +319,10 @@ function DescargaView({ d }: { d: any }) {
   );
 }
 
-function MejoraView({ m }: { m: any }) {
-  const adicionales: string[] = (() => { try { return JSON.parse(m.tecnicosIds || "[]"); } catch { return []; } })();
+function MejoraView({ m, creador }: { m: any; creador?: string }) {
   return (
     <Section title="Mejora/Modificación">
-      <Field label="Técnicos" value={adicionales.length > 0 ? <>{m.tecnico?.name ?? "—"} + <TecnicosAdicionales ids={adicionales} /></> : (m.tecnico?.name ?? "—")} />
+      <Field label="Técnicos" value={<TecnicosField creador={creador} resueltos={m.tecnicosResueltos} />} />
       <Field label="Inicio" value={format(new Date(m.fechaInicio), "d MMM yyyy HH:mm", { locale: es })} />
       {m.fechaFin && (
         <>
@@ -358,12 +337,11 @@ function MejoraView({ m }: { m: any }) {
   );
 }
 
-function GenericoView({ g }: { g: any }) {
-  const adicionales: string[] = (() => { try { return JSON.parse(g.tecnicosIds || "[]"); } catch { return []; } })();
+function GenericoView({ g, creador }: { g: any; creador?: string }) {
   return (
     <Section title="Documento">
-      {adicionales.length > 0 && (
-        <Field label="Técnicos" value={<TecnicosAdicionales ids={adicionales} />} />
+      {(g.tecnicosResueltos?.length > 0 || creador) && (
+        <Field label="Técnicos" value={<TecnicosField creador={creador} resueltos={g.tecnicosResueltos} />} />
       )}
       {g.contenido && (
         <Field label="Contenido" value={<pre className="whitespace-pre-wrap font-sans text-sm">{g.contenido}</pre>} />

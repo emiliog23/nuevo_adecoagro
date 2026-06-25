@@ -42,7 +42,31 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   if (!doc) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-  return NextResponse.json(doc);
+
+  // Resolve tecnicosIds to user objects server-side (avoids role-restricted client fetch)
+  async function resolveTecnicos(idsJson: string | null) {
+    if (!idsJson) return [];
+    try {
+      const ids: string[] = JSON.parse(idsJson);
+      if (!ids.length) return [];
+      return prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, color: true } });
+    } catch { return []; }
+  }
+
+  const [tecnicosReporte, tecnicosMejora] = await Promise.all([
+    doc.reporteIntervencion ? resolveTecnicos(doc.reporteIntervencion.tecnicosIds) : [],
+    doc.mejoraModificacion  ? resolveTecnicos(doc.mejoraModificacion.tecnicosIds)  : [],
+  ]);
+
+  return NextResponse.json({
+    ...doc,
+    reporteIntervencion: doc.reporteIntervencion
+      ? { ...doc.reporteIntervencion, tecnicosResueltos: tecnicosReporte }
+      : null,
+    mejoraModificacion: doc.mejoraModificacion
+      ? { ...doc.mejoraModificacion, tecnicosResueltos: tecnicosMejora }
+      : null,
+  });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

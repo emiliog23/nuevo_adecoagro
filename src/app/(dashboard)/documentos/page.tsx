@@ -63,6 +63,35 @@ export default function DocumentosPage() {
   const myId = session?.user?.id as string;
   const noLeidos = docsFiltrados.filter((d) => !d.lecturas?.some((l: any) => l.userId === myId)).length;
 
+  // ── Selección masiva ────────────────────────────────────────────────────────
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkCarpetaModal, setBulkCarpetaModal] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const allSelected = docsFiltrados.length > 0 && selected.size === docsFiltrados.length;
+  const someSelected = selected.size > 0;
+
+  function toggleSelect(id: string) {
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  }
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(docsFiltrados.map(d => d.id)));
+  }
+
+  async function bulkAction(action: string, carpetaId?: string | null) {
+    setBulkLoading(true);
+    await fetch("/api/documentos/bulk", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...selected], action, carpetaId }),
+    });
+    setSelected(new Set());
+    setBulkCarpetaModal(false);
+    setBulkLoading(false);
+    mutate();
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; doc: any } | null>(null);
   const [moverModal, setMoverModal] = useState<{ docId: string; maquinaId: string | null } | null>(null);
   const { data: maquinasData } = useSWR("/api/maquinas", fetcher);
@@ -124,14 +153,35 @@ export default function DocumentosPage() {
         <NuevoDocumentoDropdown />
       </div>
 
-      {/* Count bar */}
-      <div className="bg-[#f7f8f9] border-b border-[#d4d6d8] px-6 py-1.5">
+      {/* Count bar + bulk actions */}
+      <div className="bg-[#f7f8f9] border-b border-[#d4d6d8] px-6 py-1.5 flex items-center gap-4">
         <span className="text-xs text-[#5a5f67]">
           {docsFiltrados.length} registro{docsFiltrados.length !== 1 ? "s" : ""}
           {noLeidos > 0 && (
             <span className="ml-2 font-semibold" style={{ color: "#1C6B30" }}>· {noLeidos} sin leer</span>
           )}
         </span>
+
+        {/* Bulk action bar */}
+        {someSelected && (
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-[#5a5f67]">{selected.size} seleccionado{selected.size !== 1 ? "s" : ""}</span>
+            <button onClick={() => bulkAction("archive")} disabled={bulkLoading}
+              className="text-xs px-3 py-1 border border-[#d4d6d8] bg-white text-[#5a5f67] hover:bg-[#f7f8f9] transition-colors disabled:opacity-50">
+              Archivar
+            </button>
+            <button onClick={() => bulkAction("unarchive")} disabled={bulkLoading}
+              className="text-xs px-3 py-1 border border-[#d4d6d8] bg-white text-[#5a5f67] hover:bg-[#f7f8f9] transition-colors disabled:opacity-50">
+              Desarchivar
+            </button>
+            <button onClick={() => setBulkCarpetaModal(true)} disabled={bulkLoading}
+              className="text-xs px-3 py-1 border border-[#d4d6d8] bg-white text-[#5a5f67] hover:bg-[#f7f8f9] transition-colors disabled:opacity-50">
+              Mover a carpeta
+            </button>
+            <button onClick={() => setSelected(new Set())}
+              className="text-xs text-[#9ea3aa] hover:text-[#5a5f67]">✕ Limpiar</button>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -147,7 +197,10 @@ export default function DocumentosPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#d4d6d8] bg-[#f7f8f9]">
-                <th className="w-5 px-3 py-2"></th>
+                <th className="w-8 px-3 py-2">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                    className="w-3.5 h-3.5 accent-[#1C6B30] cursor-pointer" />
+                </th>
                 <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2">Título</th>
                 <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2">Tipo</th>
                 <th className="text-left text-xs font-semibold text-[#5a5f67] px-3 py-2 hidden md:table-cell">Máquina / Ruta</th>
@@ -180,8 +233,10 @@ export default function DocumentosPage() {
                     e.currentTarget.style.backgroundColor = !doc.lecturas?.some((l: any) => l.userId === myId) ? "#e8e8eb" : "";
                   }}
                 >
-                  <td className="px-3 py-2 text-center">
-                    {doc.importante && <span className="text-amber-500 text-xs">★</span>}
+                  <td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleSelect(doc.id)}
+                      className="w-3.5 h-3.5 accent-[#1C6B30] cursor-pointer" />
+                    {doc.importante && <span className="text-amber-500 text-xs ml-1">★</span>}
                   </td>
                   <td className="px-3 py-2">
                     <Link href={`/documentos/${doc.id}`} className="text-[#1C6B30] hover:underline font-medium">
@@ -250,6 +305,15 @@ export default function DocumentosPage() {
           currentCarpetaId={carpetaModal.carpetaId}
           onSave={async (carpetaId) => { await patch(carpetaModal.docId, { carpetaId }); mutate(); setCarpetaModal(null); }}
           onClose={() => setCarpetaModal(null)}
+        />
+      )}
+
+      {bulkCarpetaModal && (
+        <CarpetaModal
+          carpetas={carpetasData}
+          currentCarpetaId={null}
+          onSave={(carpetaId) => bulkAction("move", carpetaId)}
+          onClose={() => setBulkCarpetaModal(false)}
         />
       )}
     </div>

@@ -41,15 +41,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     select: { titulo: true, creadoPorId: true },
   });
   if (doc) {
-    const prevCommenters = await prisma.comentario.findMany({
-      where: { documentoId, NOT: { userId: session.user.id as string } },
-      select: { userId: true },
-      distinct: ["userId"],
-    });
+    const [prevCommenters, lectores] = await Promise.all([
+      prisma.comentario.findMany({
+        where: { documentoId, NOT: { userId: session.user.id as string } },
+        select: { userId: true },
+        distinct: ["userId"],
+      }),
+      prisma.lecturaDocumento.findMany({
+        where: { documentoId, NOT: { userId: session.user.id as string } },
+        select: { userId: true },
+      }),
+    ]);
 
     const toNotify = new Set<string>();
     if (doc.creadoPorId !== (session.user.id as string)) toNotify.add(doc.creadoPorId);
     prevCommenters.forEach((c) => toNotify.add(c.userId));
+    lectores.forEach((l) => toNotify.add(l.userId));
 
     const msg = `${session.user.name} comentó en "${doc.titulo}"`;
     for (const uid of toNotify) {
