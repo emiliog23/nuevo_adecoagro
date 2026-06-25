@@ -7,8 +7,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
-  const { nombre } = await req.json();
+  const userId = session.user.id as string;
 
+  // Verify ownership
+  const existing = await prisma.carpeta.findUnique({ where: { id }, select: { userId: true } });
+  if (!existing || existing.userId !== userId)
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const { nombre } = await req.json();
   const carpeta = await prisma.carpeta.update({
     where: { id },
     data: { nombre: nombre.trim() },
@@ -22,6 +28,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
+  const userId = session.user.id as string;
+
+  // Verify ownership
+  const existing = await prisma.carpeta.findUnique({ where: { id }, select: { userId: true } });
+  if (!existing || existing.userId !== userId)
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   // Unlink per-user document associations from this folder
   await prisma.documentoUsuario.updateMany({ where: { carpetaId: id }, data: { carpetaId: null } });
