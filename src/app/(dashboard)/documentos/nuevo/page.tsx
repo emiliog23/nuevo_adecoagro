@@ -343,14 +343,9 @@ function OrdenF({ datos, upd, tecnicos, imageFiles, setImageFiles, sessionId }: 
         </select>
       </div>
     </div>
-    <div className="grid grid-cols-2 gap-3">
-      <div><Lbl>Vencimiento</Lbl><input type="date" value={datos.fechaVencimiento ?? ""} onChange={(e) => upd("fechaVencimiento", e.target.value)} className={ic} /></div>
-      <div><Lbl>Técnico responsable</Lbl>
-        <select value={datos.tecnicoId ?? ""} onChange={(e) => upd("tecnicoId", e.target.value)} className={se}>
-          <option value="">Sin asignar</option>
-          {tecnicos.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-      </div>
+    <div>
+      <Lbl>Vencimiento</Lbl>
+      <input type="date" value={datos.fechaVencimiento ?? ""} onChange={(e) => upd("fechaVencimiento", e.target.value)} className={ic} />
     </div>
     <div><Lbl>Observaciones</Lbl><textarea value={datos.observaciones ?? ""} onChange={(e) => upd("observaciones", e.target.value)} className={ta} /></div>
 

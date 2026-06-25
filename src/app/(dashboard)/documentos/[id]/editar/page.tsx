@@ -43,7 +43,7 @@ export default function EditarDocumentoPage() {
         setDatos({ contenido: d.documentoGenerico.contenido, tecnicosIds: (() => { try { return JSON.parse(d.documentoGenerico.tecnicosIds || "[]"); } catch { return []; } })() });
       } else if (d.tipo === "ORDEN_TRABAJO" && d.ordenTrabajo) {
         const ot = d.ordenTrabajo;
-        setDatos({ descripcion: ot.descripcion, prioridad: ot.prioridad, estado: ot.estado, observaciones: ot.observaciones ?? "", fechaVencimiento: ot.fechaVencimiento ? format(new Date(ot.fechaVencimiento), "yyyy-MM-dd") : "", tecnicoId: ot.tecnico?.id ?? "", tecnicosIds: (() => { try { return JSON.parse(ot.tecnicosIds || "[]"); } catch { return []; } })() });
+        setDatos({ descripcion: ot.descripcion, prioridad: ot.prioridad, estado: ot.estado, observaciones: ot.observaciones ?? "", fechaVencimiento: ot.fechaVencimiento ? format(new Date(ot.fechaVencimiento), "yyyy-MM-dd") : "", tecnicosIds: (() => { try { return JSON.parse(ot.tecnicosIds || "[]"); } catch { return []; } })() });
       } else if (d.tipo === "CIERRE_TURNO" && d.cierreTurno) {
         setDatos({ novedades: d.cierreTurno.novedades, trabajosRealizados: d.cierreTurno.trabajosRealizados ?? "", pendientes: d.cierreTurno.pendientes ?? "" });
       }
