@@ -95,6 +95,7 @@ export function Sidebar() {
   }, []);
   // ──────────────────────────────────────────────────────────────────────────
   const [archivadosDragOver, setArchivadosDragOver] = useState(false);
+  const [archivadosOpen, setArchivadosOpen] = useState(false);
   const isAdmin = ["ADMIN","SUPERVISOR"].includes(session?.user?.role ?? "");
 
   async function handleDropArchivados(e: React.DragEvent) {
@@ -206,27 +207,57 @@ export function Sidebar() {
 
                 <div className="my-1 mx-3 border-t border-[#2e3540]" />
 
-                <div
-                  onClick={() => router.push("/documentos?archivado=true")}
-                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setArchivadosDragOver(true); }}
-                  onDragLeave={(e) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setArchivadosDragOver(false); }}
-                  onDrop={handleDropArchivados}
-                  className={cn(
-                    "flex items-center gap-2 pl-5 pr-3 py-1.5 text-xs transition-colors mb-px cursor-pointer select-none",
-                    isArchivados ? "text-white font-medium" :
-                    archivadosDragOver ? "text-white" :
-                    "text-[#7a8898] hover:text-white hover:bg-[#2e3540]"
+                {/* Archivados — dropdown, collapsed by default */}
+                <div>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setArchivadosDragOver(true); }}
+                    onDragLeave={(e) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setArchivadosDragOver(false); }}
+                    onDrop={handleDropArchivados}
+                    onClick={() => setArchivadosOpen((p) => !p)}
+                    className={cn(
+                      "flex items-center gap-2 pl-5 pr-3 py-1.5 text-xs transition-colors mb-px cursor-pointer select-none",
+                      isArchivados ? "text-white font-medium" :
+                      archivadosDragOver ? "text-white" :
+                      "text-[#7a8898] hover:text-white hover:bg-[#2e3540]"
+                    )}
+                    style={
+                      isArchivados && !archivadosOpen ? { backgroundColor: "#1C6B30" } :
+                      archivadosDragOver ? { backgroundColor: "#5a3a1a" } :
+                      {}
+                    }
+                  >
+                    <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <span className="flex-1">Archivados</span>
+                    <svg className={cn("w-3 h-3 shrink-0 transition-transform opacity-60", archivadosOpen ? "rotate-90" : "")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+
+                  {archivadosOpen && (
+                    <div className="ml-2">
+                      {TIPOS_DOC.map(({ tipo: t, label }) => {
+                        const href = t ? `/documentos?archivado=true&tipo=${t}` : "/documentos?archivado=true";
+                        const archTipo = searchParams.get("tipo") ?? "";
+                        const isActive = isArchivados && archTipo === t;
+                        return (
+                          <Link
+                            key={t || "arch-todos"}
+                            href={href}
+                            className={cn(
+                              "flex items-center gap-2 pl-8 pr-3 py-1.5 text-xs transition-colors mb-px",
+                              isActive ? "text-white font-medium" : "text-[#7a8898] hover:text-white hover:bg-[#2e3540]"
+                            )}
+                            style={isActive ? { backgroundColor: "#1C6B30" } : {}}
+                          >
+                            <span className="w-1 h-1 rounded-full bg-current opacity-50 shrink-0" />
+                            {label}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
-                  style={
-                    isArchivados ? { backgroundColor: "#1C6B30" } :
-                    archivadosDragOver ? { backgroundColor: "#5a3a1a" } :
-                    {}
-                  }
-                >
-                  <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
-                  Archivados
                 </div>
               </div>
             )}

@@ -28,13 +28,15 @@ export async function GET(req: NextRequest) {
   const subsectorId = searchParams.get("subsectorId");
   const lineaId = searchParams.get("lineaId");
 
-  // Accent + case insensitive search via PostgreSQL unaccent
+  // Accent + case insensitive search via PostgreSQL unaccent — also searches machine name
   let searchIds: string[] | null = null;
   if (search?.trim()) {
     try {
       const raw = await prisma.$queryRaw<{ id: string }[]>`
-        SELECT id FROM documentos
-        WHERE unaccent(LOWER(titulo)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
+        SELECT d.id FROM documentos d
+        LEFT JOIN maquinas m ON d."maquinaId" = m.id
+        WHERE unaccent(LOWER(d.titulo)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
+           OR unaccent(LOWER(m.nombre)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
       `;
       searchIds = raw.map((r) => r.id);
     } catch {
