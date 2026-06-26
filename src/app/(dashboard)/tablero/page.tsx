@@ -25,9 +25,12 @@ import { PRIORIDAD_COLORS, PRIORIDAD_LABELS, ESTADO_OT_LABELS } from "@/lib/util
 import { useSession } from "next-auth/react";
 
 const COLUMNAS = [
-  { id: "PENDIENTE",               label: "Pendiente",     topColor: "#b0b4b8" },
-  { id: "EN_CURSO",                label: "En Curso",      topColor: "#1C6B30" },
-  { id: "COMPLETADA_CON_PROBLEMAS",label: "Con problemas", topColor: "#d97706" },
+  { id: "PENDIENTE",               label: "Pendiente",             topColor: "#b0b4b8" },
+  { id: "EN_CURSO",                label: "En Curso",              topColor: "#1C6B30" },
+  { id: "COMPLETADA",              label: "Completada",            topColor: "#374151" },
+  { id: "COMPLETADA_CON_PROBLEMAS",label: "Con problemas",         topColor: "#d97706" },
+  { id: "IMPOSIBLE_TERMINAR",      label: "Imposible de terminar", topColor: "#b91c1c" },
+  { id: "CANCELADA",               label: "Cancelada",             topColor: "#d4d6d8" },
 ] as const;
 
 type EstadoOT = string;
@@ -38,9 +41,10 @@ interface OTCard {
   titulo: string;
   prioridad: string;
   estado: EstadoOT;
+  archivado: boolean;
   fechaVencimiento?: string | null;
   tecnico?: string | null;
-  tecnicos?: string | null;   // comma-separated all technicians
+  tecnicos?: string | null;
   maquina?: string | null;
   sector?: string | null;
   linea?: string | null;
@@ -56,6 +60,7 @@ export default function TableroPage() {
   const [loading, setLoading] = useState(true);
   const [activeCard, setActiveCard] = useState<OTCard | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [mostrarArchivadas, setMostrarArchivadas] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -65,14 +70,13 @@ export default function TableroPage() {
     const res = await fetch("/api/documentos?tipo=ORDEN_TRABAJO&tablero=true");
     if (!res.ok) return;
     const { docs } = await res.json();
-    // Filter out final-state OTs from the board view
-    const ESTADOS_FINALES = new Set(["COMPLETADA", "COMPLETADA_CON_PROBLEMAS", "IMPOSIBLE_TERMINAR", "CANCELADA"]);
-    const mapped: OTCard[] = docs.filter((d: any) => !ESTADOS_FINALES.has(d.ordenTrabajo?.estado)).map((d: any) => ({
+    const mapped: OTCard[] = docs.map((d: any) => ({
       id: d.ordenTrabajo?.id ?? d.id,
       docId: d.id,
       titulo: d.titulo,
       prioridad: d.ordenTrabajo?.prioridad ?? "MEDIA",
       estado: d.ordenTrabajo?.estado ?? "PENDIENTE",
+      archivado: d.archivado ?? false,
       fechaVencimiento: d.ordenTrabajo?.fechaVencimiento ?? null,
       tecnico: d.ordenTrabajo?.tecnico?.name ?? null,
       tecnicos: (() => {
@@ -143,8 +147,13 @@ export default function TableroPage() {
     setSaving(null);
   }
 
+  // Hide: COMPLETADA + archivada (unless mostrarArchivadas is on)
+  const cardsFiltradas = cards.filter(c =>
+    mostrarArchivadas || !(c.estado === "COMPLETADA" && c.archivado)
+  );
+
   const cardsByEstado = COLUMNAS.reduce<Record<string, OTCard[]>>((acc, col) => {
-    acc[col.id] = cards.filter(c => c.estado === col.id);
+    acc[col.id] = cardsFiltradas.filter(c => c.estado === col.id);
     return acc;
   }, {});
 
@@ -165,7 +174,14 @@ export default function TableroPage() {
     <div className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="bg-white border-b border-[#d4d6d8] px-6 py-3 flex items-center justify-between shrink-0">
-        <h1 className="text-sm font-semibold text-[#1d2023]">Tablero — Órdenes de Trabajo <span className="font-normal text-[#9ea3aa]">({cards.length})</span></h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-sm font-semibold text-[#1d2023]">Tablero — Órdenes de Trabajo <span className="font-normal text-[#9ea3aa]">({cardsFiltradas.length})</span></h1>
+          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" checked={mostrarArchivadas} onChange={(e) => setMostrarArchivadas(e.target.checked)}
+              className="w-3.5 h-3.5 accent-[#1C6B30]" />
+            <span className="text-xs text-[#5a5f67]">Ver archivadas</span>
+          </label>
+        </div>
         {canCreateOT && (
           <Link href="/documentos/nuevo?tipo=ORDEN_TRABAJO" className="flex items-center gap-2 text-sm font-semibold text-white px-3 py-1.5 transition-colors" style={{ backgroundColor: "#1C6B30" }}>
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
