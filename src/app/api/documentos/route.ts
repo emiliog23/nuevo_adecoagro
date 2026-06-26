@@ -35,8 +35,10 @@ export async function GET(req: NextRequest) {
       const raw = await prisma.$queryRaw<{ id: string }[]>`
         SELECT d.id FROM documentos d
         LEFT JOIN maquinas m ON d."maquinaId" = m.id
+        LEFT JOIN lineas l ON m."lineaId" = l.id
         WHERE unaccent(LOWER(d.titulo)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
            OR unaccent(LOWER(m.nombre)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
+           OR unaccent(LOWER(l.nombre)) LIKE unaccent(LOWER(${`%${search.trim()}%`}))
       `;
       searchIds = raw.map((r) => r.id);
     } catch {

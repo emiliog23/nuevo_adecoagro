@@ -246,7 +246,7 @@ export function Sidebar() {
                             key={t || "arch-todos"}
                             href={href}
                             className={cn(
-                              "flex items-center gap-2 pl-8 pr-3 py-1.5 text-xs transition-colors mb-px",
+                              "flex items-center gap-2 pl-3 pr-3 py-1.5 text-xs transition-colors mb-px",
                               isActive ? "text-white font-medium" : "text-[#7a8898] hover:text-white hover:bg-[#2e3540]"
                             )}
                             style={isActive ? { backgroundColor: "#1C6B30" } : {}}
