@@ -18,11 +18,10 @@ export async function GET(req: NextRequest) {
   const hasta = new Date(hastaRaw);
   hasta.setUTCHours(23, 59, 59, 999);
 
-  const userId = session.user.id as string;
-  // archivado is per-user now — exclude docs this user has archived
+  // Analytics includes ALL documents regardless of per-user archivado status
+  // Archiving is personal organization, not data deletion
   const where = {
     createdAt: { gte: desde, lte: hasta },
-    NOT: { documentoUsuarios: { some: { userId, archivado: true } } },
   };
 
   try {
