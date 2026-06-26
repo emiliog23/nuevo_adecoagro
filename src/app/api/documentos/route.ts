@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search");
   const carpetaId = searchParams.get("carpetaId");
   const soloArchivados = searchParams.get("archivado") === "true";
+  const esModoTablero = searchParams.get("tablero") === "true"; // bypasses archivado/carpeta filters
   const userId = session.user.id as string;
   const sectorId = searchParams.get("sectorId");
   const subsectorId = searchParams.get("subsectorId");
@@ -49,7 +50,11 @@ export async function GET(req: NextRequest) {
         ...(maquinaId ? { maquinaId } : {}),
         ...(searchIds !== null ? { id: { in: searchIds } } : search ? { titulo: { contains: search, mode: "insensitive" } } : {}),
         // Per-user visibility: merge archivado + carpeta into a single AND to avoid key conflicts
-        AND: soloArchivados
+        AND: esModoTablero
+          // Tablero mode: show all OTs regardless of archivado/carpeta
+          // Only hide OTs in final states (completada, etc.) — handled client-side via estado filter
+          ? []
+          : soloArchivados
           // Archivados view: must have archivado=true for this user
           ? [{ documentoUsuarios: { some: { userId, archivado: true } } }]
           : carpetaId

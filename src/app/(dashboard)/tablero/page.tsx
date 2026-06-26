@@ -25,15 +25,12 @@ import { PRIORIDAD_COLORS, PRIORIDAD_LABELS, ESTADO_OT_LABELS } from "@/lib/util
 import { useSession } from "next-auth/react";
 
 const COLUMNAS = [
-  { id: "PENDIENTE",               label: "Pendiente",              topColor: "#b0b4b8" },
-  { id: "EN_CURSO",                label: "En Curso",               topColor: "#1C6B30" },
-  { id: "COMPLETADA",              label: "Completada",             topColor: "#374151" },
-  { id: "COMPLETADA_CON_PROBLEMAS",label: "Con problemas",          topColor: "#d97706" },
-  { id: "IMPOSIBLE_TERMINAR",      label: "Imposible de terminar",  topColor: "#b91c1c" },
-  { id: "CANCELADA",               label: "Cancelada",              topColor: "#d4d6d8" },
+  { id: "PENDIENTE",               label: "Pendiente",     topColor: "#b0b4b8" },
+  { id: "EN_CURSO",                label: "En Curso",      topColor: "#1C6B30" },
+  { id: "COMPLETADA_CON_PROBLEMAS",label: "Con problemas", topColor: "#d97706" },
 ] as const;
 
-type EstadoOT = typeof COLUMNAS[number]["id"];
+type EstadoOT = string;
 
 interface OTCard {
   id: string;
@@ -65,10 +62,12 @@ export default function TableroPage() {
   );
 
   const fetchOTs = useCallback(async () => {
-    const res = await fetch("/api/documentos?tipo=ORDEN_TRABAJO");
+    const res = await fetch("/api/documentos?tipo=ORDEN_TRABAJO&tablero=true");
     if (!res.ok) return;
     const { docs } = await res.json();
-    const mapped: OTCard[] = docs.map((d: any) => ({
+    // Filter out final-state OTs from the board view
+    const ESTADOS_FINALES = new Set(["COMPLETADA", "COMPLETADA_CON_PROBLEMAS", "IMPOSIBLE_TERMINAR", "CANCELADA"]);
+    const mapped: OTCard[] = docs.filter((d: any) => !ESTADOS_FINALES.has(d.ordenTrabajo?.estado)).map((d: any) => ({
       id: d.ordenTrabajo?.id ?? d.id,
       docId: d.id,
       titulo: d.titulo,
