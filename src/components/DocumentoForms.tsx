@@ -252,3 +252,13 @@ export function localToUTC(s: string | null | undefined): string | undefined {
   if (!s) return undefined;
   return new Date(s).toISOString();
 }
+
+/**
+ * Convierte un string date-only (YYYY-MM-DD) a UTC ISO interpretándolo como
+ * medianoche local, no UTC. new Date("YYYY-MM-DD") es UTC midnight por spec,
+ * lo que resta un día en zonas UTC-.
+ */
+export function localDateToUTC(s: string | null | undefined): string | undefined {
+  if (!s) return undefined;
+  return new Date(`${s}T00:00:00`).toISOString();
+}

@@ -29,5 +29,9 @@ body {
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: #3a4048; border-radius: 2px; }
 
+/* Force 24-hour format on all datetime inputs (WebKit fallback; primary fix via lang="es" on <html>) */
+input[type="datetime-local"]::-webkit-datetime-edit-ampm-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; }
+
 /* SAP-like dense tables */
 table { border-collapse: collapse; }

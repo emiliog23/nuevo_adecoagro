@@ -8,7 +8,7 @@ import {
   ic, se, REPUESTO_VACIO,
   Lbl,
   ReporteF, MejoraF, GenericoF, OrdenF, CierreF, DescargaF,
-  getTurnoFromHora, localToUTC,
+  getTurnoFromHora, localToUTC, localDateToUTC,
 } from "@/components/DocumentoForms";
 
 const TIPO_LABELS: Record<string, string> = {
@@ -119,9 +119,10 @@ export default function EditarDocumentoPage() {
     // Convert datetime-local strings (local time) to UTC ISO for correct DB storage
     datosEnvio = {
       ...datosEnvio,
-      ...(datosEnvio.fechaInicio != null && { fechaInicio: localToUTC(datosEnvio.fechaInicio) }),
-      ...(datosEnvio.fechaFin    != null && { fechaFin:    localToUTC(datosEnvio.fechaFin) }),
-      ...(datosEnvio.fecha       != null && { fecha:       localToUTC(datosEnvio.fecha) }),
+      ...(datosEnvio.fechaInicio      != null && { fechaInicio:      localToUTC(datosEnvio.fechaInicio) }),
+      ...(datosEnvio.fechaFin         != null && { fechaFin:         localToUTC(datosEnvio.fechaFin) }),
+      ...(datosEnvio.fecha            != null && { fecha:            localToUTC(datosEnvio.fecha) }),
+      ...(datosEnvio.fechaVencimiento != null && { fechaVencimiento: localDateToUTC(datosEnvio.fechaVencimiento) }),
     };
 
     const res = await fetch(`/api/documentos/${id}`, {

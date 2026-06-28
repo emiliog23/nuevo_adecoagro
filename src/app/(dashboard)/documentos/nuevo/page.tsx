@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import {
   ic, se, REPUESTO_VACIO,
   ReporteF, MejoraF, GenericoF, OrdenF, CierreF, DescargaF,
-  getTurnoFromHora, localToUTC,
+  getTurnoFromHora, localToUTC, localDateToUTC,
 } from "@/components/DocumentoForms";
 
 const TIPOS = [
@@ -95,9 +95,10 @@ export default function NuevoDocumentoPage() {
     // Convert datetime-local strings (local time) to UTC ISO for correct DB storage
     datosFinales = {
       ...datosFinales,
-      ...(datosFinales.fechaInicio != null && { fechaInicio: localToUTC(datosFinales.fechaInicio) }),
-      ...(datosFinales.fechaFin    != null && { fechaFin:    localToUTC(datosFinales.fechaFin) }),
-      ...(datosFinales.fecha       != null && { fecha:       localToUTC(datosFinales.fecha) }),
+      ...(datosFinales.fechaInicio      != null && { fechaInicio:      localToUTC(datosFinales.fechaInicio) }),
+      ...(datosFinales.fechaFin         != null && { fechaFin:         localToUTC(datosFinales.fechaFin) }),
+      ...(datosFinales.fecha            != null && { fecha:            localToUTC(datosFinales.fecha) }),
+      ...(datosFinales.fechaVencimiento != null && { fechaVencimiento: localDateToUTC(datosFinales.fechaVencimiento) }),
     };
 
     const res = await fetch("/api/documentos", {
