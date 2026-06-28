@@ -136,6 +136,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         fechaVencimiento: body.datos.fechaVencimiento ? new Date(body.datos.fechaVencimiento) : null,
         tecnicoId: body.datos.tecnicoId || null,
         observaciones: body.datos.observaciones || null,
+        ...(body.datos.tecnicosIds !== undefined && { tecnicosIds: JSON.stringify(body.datos.tecnicosIds) }),
       },
     });
 
@@ -152,17 +153,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   // Update specific sub-document content for edit mode
-  if (body.tipo === "ORDEN_TRABAJO" && body.datos && body.edicion) {
-    await prisma.ordenTrabajo.update({
-      where: { documentoId: id },
-      data: {
-        descripcion: body.datos.descripcion,
-        prioridad: body.datos.prioridad,
-        observaciones: body.datos.observaciones || null,
-        fechaVencimiento: body.datos.fechaVencimiento ? new Date(body.datos.fechaVencimiento) : null,
-      },
-    });
-  } else if (body.tipo === "REPORTE_INTERVENCION" && body.datos && body.edicion) {
+  if (body.tipo === "REPORTE_INTERVENCION" && body.datos && body.edicion) {
     await prisma.reporteIntervencion.update({
       where: { documentoId: id },
       data: {
@@ -199,6 +190,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         novedades: body.datos.novedades,
         trabajosRealizados: body.datos.trabajosRealizados || null,
         pendientes: body.datos.pendientes || null,
+        ...(body.datos.fecha  && { fecha:  new Date(body.datos.fecha) }),
+        ...(body.datos.turno  && { turno:  body.datos.turno }),
+      },
+    });
+  } else if (body.tipo === "DESCARGA_REPUESTOS" && body.datos && body.edicion) {
+    await prisma.descargaRepuestos.update({
+      where: { documentoId: id },
+      data: {
+        ...(body.datos.fecha  && { fecha:  new Date(body.datos.fecha) }),
+        ...(body.datos.items  !== undefined && { items: JSON.stringify(body.datos.items) }),
+        observaciones: body.datos.observaciones || null,
       },
     });
   }
